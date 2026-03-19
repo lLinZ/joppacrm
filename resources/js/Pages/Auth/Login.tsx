@@ -100,8 +100,8 @@ export default function Login({
                         </Link>
                     )}
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Log in
+                    <PrimaryButton className="ms-4 bg-gradient-to-r from-indigo-600 to-purple-600 border-0 hover:scale-[1.02] transition-transform shadow-lg shadow-indigo-500/30 font-semibold" disabled={processing}>
+                        Ingresar
                     </PrimaryButton>
                 </div>
             </form>

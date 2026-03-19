@@ -33,10 +33,7 @@ export default function Welcome({ auth }: { auth: any }) {
                                 </Link>
                             ) : (
                                 <>
-                                    <Link href={route('login')} className="hidden sm:block text-sm font-medium text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">
-                                        Iniciar Sesión
-                                    </Link>
-                                    <Link href={route('register')}>
+                                    <Link href={route('login')}>
                                         <button className="group relative inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-2.5 text-sm font-semibold text-white shadow-xl shadow-indigo-500/30 transition-all hover:scale-105 hover:shadow-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950">
                                             Acceder
                                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
