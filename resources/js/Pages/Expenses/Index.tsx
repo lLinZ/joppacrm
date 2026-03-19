@@ -57,6 +57,24 @@ export default function ExpensesIndex({ expenses, categories, suppliers, rates, 
         (e.date && e.date.includes(searchTerm))
     );
 
+    const totalsByCurrency = filteredData.reduce((acc: Record<string, number>, expense: Expense) => {
+        const curr = expense.currency || 'Bs';
+        acc[curr] = (acc[curr] || 0) + Number(expense.amount);
+        return acc;
+    }, {});
+
+    const grandTotalBs = filteredData.reduce((total: number, expense: Expense) => {
+        const amount = Number(expense.amount);
+        const rate = expense.exchange_rate_value || 0;
+        if (expense.currency && expense.currency !== 'Bs') {
+            return total + (amount * rate);
+        }
+        return total + amount;
+    }, 0);
+
+    const usdRate = rates?.find((r: any) => r.currency === 'USD')?.rate;
+    const grandTotalUSD = usdRate && usdRate > 0 ? grandTotalBs / usdRate : null;
+
     const openCreateDialog = () => {
         reset();
         setIsAddModalOpen(true);
@@ -344,6 +362,34 @@ export default function ExpensesIndex({ expenses, categories, suppliers, rates, 
                     </Button>
                 }
             />
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-card border border-border rounded-xl p-4 shadow-sm flex flex-col justify-center">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Total General (Bs)</p>
+                    <p className="text-2xl font-bold text-foreground">
+                        {new Intl.NumberFormat("es-VE", { style: "currency", currency: "VES" }).format(grandTotalBs)}
+                    </p>
+                </div>
+                {grandTotalUSD !== null && (
+                    <div className="bg-card border border-border rounded-xl p-4 shadow-sm flex flex-col justify-center">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Total General (Ref USD)</p>
+                        <p className="text-2xl font-bold text-emerald-500 dark:text-emerald-400">
+                            {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(grandTotalUSD)}
+                        </p>
+                    </div>
+                )}
+                {Object.entries(totalsByCurrency).map(([currency, amount]) => (
+                    <div key={currency} className="bg-primary/5 border border-primary/20 rounded-xl p-4 shadow-sm flex flex-col justify-center">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Subtotal {currency}</p>
+                        <p className="text-xl font-bold text-primary">
+                            {currency === 'Bs' 
+                                ? new Intl.NumberFormat("es-VE", { style: "currency", currency: "VES" }).format(amount as number)
+                                : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount as number).replace('$', currency === 'EUR' || currency === 'Euro' ? '€' : '$')
+                            }
+                        </p>
+                    </div>
+                ))}
+            </div>
 
             <div className="mb-6 flex flex-col sm:flex-row gap-4 items-end">
                 <div className="w-full sm:max-w-xs">
