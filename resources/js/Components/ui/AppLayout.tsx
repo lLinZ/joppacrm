@@ -5,6 +5,34 @@ import { Button } from '@/Components/ui/button';
 import { ThemeToggle } from '@/Components/ui/ThemeToggle';
 import { Toaster, toast } from 'sonner';
 
+// Helper function to convert HEX to HSL for Tailwind CSS variable injection
+function hexToHSL(hex: string) {
+    let r = 0, g = 0, b = 0;
+    if (hex.length === 4) {
+        r = parseInt("0x" + hex[1] + hex[1]);
+        g = parseInt("0x" + hex[2] + hex[2]);
+        b = parseInt("0x" + hex[3] + hex[3]);
+    } else if (hex.length === 7) {
+        r = parseInt("0x" + hex[1] + hex[2]);
+        g = parseInt("0x" + hex[3] + hex[4]);
+        b = parseInt("0x" + hex[5] + hex[6]);
+    }
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+    return `${(h * 360).toFixed(1)} ${(s * 100).toFixed(1)}% ${(l * 100).toFixed(1)}%`;
+}
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { auth, flash } = usePage().props as any;
@@ -22,8 +50,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const root = document.documentElement;
+        // Clean up previous classes and styles
         root.classList.remove('theme-zinc', 'theme-blue', 'theme-emerald', 'theme-rose', 'theme-orange');
-        if (user.theme && user.theme !== 'zinc') {
+        root.style.removeProperty('--primary');
+        root.style.removeProperty('--ring');
+
+        if (!user.theme) return;
+        
+        if (user.theme.startsWith('#')) {
+            // It's a custom hex color
+            const hslString = hexToHSL(user.theme);
+            root.style.setProperty('--primary', hslString);
+            root.style.setProperty('--ring', hslString);
+        } else if (user.theme !== 'zinc') {
+            // It's a predefined theme
             root.classList.add(`theme-${user.theme}`);
         }
     }, [user.theme]);
@@ -104,11 +144,32 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                                     <button
                                         key={t.id}
                                         onClick={() => changeTheme(t.id)}
-                                        className={`w-5 h-5 rounded-full ${t.color} ${user.theme === t.id ? 'ring-2 ring-offset-2 ring-primary ring-offset-background' : 'hover:scale-110 transition-transform'}`}
+                                        className={`w-5 h-5 rounded-full ${t.color} shrink-0 ${user.theme === t.id ? 'ring-2 ring-offset-2 ring-primary ring-offset-background' : 'hover:scale-110 transition-transform'}`}
                                         title={`Tema: ${t.id}`}
                                         aria-label={`Seleccionar tema ${t.id}`}
                                     />
                                 ))}
+                                
+                                {/* Custom Color Picker */}
+                                <div className="relative shrink-0 flex items-center justify-center w-5 h-5 rounded-full overflow-hidden hover:scale-110 transition-transform cursor-pointer shadow-inner">
+                                    <div 
+                                        className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500" 
+                                        title="Color Personalizado"
+                                    />
+                                    {user.theme?.startsWith('#') && (
+                                        <div 
+                                            className="absolute inset-0 ring-2 ring-offset-2 ring-primary ring-offset-background"
+                                            style={{ backgroundColor: user.theme }} 
+                                        />
+                                    )}
+                                    <input 
+                                        type="color" 
+                                        value={user.theme?.startsWith('#') ? user.theme : '#8b5cf6'}
+                                        onChange={(e) => changeTheme(e.target.value)}
+                                        className="absolute -inset-2 w-[200%] h-[200%] opacity-0 cursor-pointer"
+                                        title="Elegir Color Personalizado"
+                                    />
+                                </div>
                             </div>
                         </div>
 

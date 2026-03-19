@@ -46,7 +46,7 @@ class ProfileController extends Controller
     public function updateTheme(Request $request): RedirectResponse
     {
         $request->validate([
-            'theme' => ['required', 'string', 'in:zinc,blue,emerald,rose,orange'],
+            'theme' => ['required', 'string', 'regex:/^(zinc|blue|emerald|rose|orange|^#[0-9a-fA-F]{6})$/i'],
         ]);
 
         $request->user()->forceFill([
