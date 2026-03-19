@@ -1,26 +1,95 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
+import { AppLayout } from '@/components/ui/AppLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { StatCard } from '@/components/ui/StatCard';
+import { DataTable } from '@/components/ui/DataTable';
+import { Users, ShoppingCart, Package, CreditCard } from 'lucide-react';
 
-export default function Dashboard() {
+interface Product {
+    id: number;
+    name: string;
+    sku: string;
+    quantity: number;
+    min_stock: number;
+}
+
+interface DashboardProps {
+    stats: {
+        total_clients: number;
+        total_suppliers: number;
+        inventory_value: number;
+        monthly_expenses: number;
+    };
+    low_stock_products: Product[];
+}
+
+export default function Dashboard({ stats, low_stock_products }: DashboardProps) {
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+        }).format(amount);
+    };
+
+    const columns = [
+        {
+            accessorKey: 'name',
+            header: 'Producto',
+        },
+        {
+            accessorKey: 'sku',
+            header: 'SKU',
+        },
+        {
+            accessorKey: 'quantity',
+            header: 'Cantidad Actual',
+        },
+        {
+            accessorKey: 'min_stock',
+            header: 'Mínimo Requerido',
+        },
+    ];
+
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Dashboard
-                </h2>
-            }
-        >
+        <AppLayout>
             <Head title="Dashboard" />
+            
+            <PageHeader 
+                title="Dashboard" 
+                description="Resumen de la información de tu emprendimiento."
+            />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6 text-gray-900">
-                            You're logged in!
-                        </div>
-                    </div>
-                </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                <StatCard 
+                    title="Total Clientes" 
+                    value={stats.total_clients} 
+                    icon={Users} 
+                />
+                <StatCard 
+                    title="Total Proveedores" 
+                    value={stats.total_suppliers} 
+                    icon={ShoppingCart} 
+                />
+                <StatCard 
+                    title="Valor Inventario" 
+                    value={formatCurrency(stats.inventory_value)} 
+                    icon={Package} 
+                />
+                <StatCard 
+                    title="Gastos del Mes" 
+                    value={formatCurrency(stats.monthly_expenses)} 
+                    icon={CreditCard} 
+                />
             </div>
-        </AuthenticatedLayout>
+
+            <h3 className="text-xl font-bold tracking-tight mb-4 text-destructive">
+                Productos con Stock Bajo
+            </h3>
+            
+            <DataTable 
+                columns={columns} 
+                data={low_stock_products} 
+            />
+        </AppLayout>
     );
 }
