@@ -303,25 +303,27 @@ export default function ExpensesIndex({ expenses, categories, suppliers, rates, 
             cell: ({ row }: any) => {
                 const expense = row.original;
                 return (
-                    <div className="text-right">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Abrir menú</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditDialog(expense); }}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openDeleteDialog(expense); }} className="text-destructive focus:text-destructive">
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Eliminar
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                    <div className="flex items-center justify-end gap-1">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
+                            onClick={() => openEditDialog(expense)}
+                            title="Editar"
+                        >
+                            <Pencil className="h-4 w-4" />
+                            <span className="sr-only">Editar</span>
+                        </Button>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 hover:bg-destructive/10 text-destructive hover:text-destructive transition-colors"
+                            onClick={() => openDeleteDialog(expense)}
+                            title="Eliminar"
+                        >
+                            <Trash className="h-4 w-4" />
+                            <span className="sr-only">Eliminar</span>
+                        </Button>
                     </div>
                 );
             },
