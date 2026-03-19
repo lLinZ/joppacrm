@@ -11,7 +11,7 @@ class ExpenseController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Expense::with(['category', 'supplier'])->latest();
+        $query = Expense::with(['category', 'supplier'])->orderByDesc('date')->latest('id');
 
         if ($request->has('start_date') && $request->has('end_date') && $request->start_date && $request->end_date) {
             $query->whereBetween('date', [$request->start_date, $request->end_date]);

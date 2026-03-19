@@ -65,9 +65,9 @@ export default function ExpensesIndex({ expenses, categories, suppliers, rates, 
     const openEditDialog = (expense: Expense) => {
         setSelectedExpense(expense);
         setData({
-            description: expense.description,
-            amount: expense.amount,
-            date: expense.date.substring(0, 10),
+            description: expense.description || '',
+            amount: expense.amount || 0,
+            date: expense.date ? expense.date.substring(0, 10) : new Date().toISOString().split('T')[0],
             category_id: expense.category?.id?.toString() || '',
             supplier_id: expense.supplier?.id?.toString() || '',
             order_details: expense.order_details || '',
@@ -252,7 +252,18 @@ export default function ExpensesIndex({ expenses, categories, suppliers, rates, 
     );
 
     const columns = [
-        { accessorKey: 'date', header: 'Fecha', cell: ({ row }: any) => row.original.date.substring(0, 10) },
+        { 
+            accessorKey: 'date', 
+            header: 'Fecha', 
+            cell: ({ row }: any) => {
+                const rawDate = row.original.date;
+                if (!rawDate) return '-';
+                // Adjust for timezone differences to prevent shifting a day backwards
+                const d = new Date(rawDate);
+                const localDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+                return new Intl.DateTimeFormat('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }).format(localDate);
+            } 
+        },
         { accessorKey: 'description', header: 'Descripción' },
         { 
             id: 'proveedor', 
@@ -301,11 +312,11 @@ export default function ExpensesIndex({ expenses, categories, suppliers, rates, 
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openEditDialog(expense)}>
+                                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditDialog(expense); }}>
                                     <Pencil className="mr-2 h-4 w-4" />
                                     Editar
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openDeleteDialog(expense)} className="text-destructive focus:text-destructive">
+                                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openDeleteDialog(expense); }} className="text-destructive focus:text-destructive">
                                     <Trash className="mr-2 h-4 w-4" />
                                     Eliminar
                                 </DropdownMenuItem>
