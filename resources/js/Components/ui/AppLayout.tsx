@@ -39,13 +39,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     const user = auth.user;
 
     const navigation = [
-        { name: 'Dashboard', href: route('dashboard'), icon: LayoutDashboard },
-        { name: 'Proveedores', href: route('suppliers.index'), icon: Users },
-        { name: 'Clientes', href: route('clients.index'), icon: UserSquare2 },
-        { name: 'Inventario', href: route('products.index'), icon: PackageCheck },
-        { name: 'Gastos', href: route('expenses.index'), icon: Receipt },
-        { name: 'Usuarios', href: route('users.index'), icon: UserCog },
-        { name: 'Tasas de Cambio', href: route('exchange-rates.index'), icon: Settings },
+        { name: 'Dashboard', href: route('dashboard'), routeName: 'dashboard', icon: LayoutDashboard },
+        { name: 'Proveedores', href: route('suppliers.index'), routeName: 'suppliers.*', icon: Users },
+        { name: 'Clientes', href: route('clients.index'), routeName: 'clients.*', icon: UserSquare2 },
+        { name: 'Inventario', href: route('products.index'), routeName: 'products.*', icon: PackageCheck },
+        { name: 'Gastos', href: route('expenses.index'), routeName: 'expenses.*', icon: Receipt },
+        { name: 'Usuarios', href: route('users.index'), routeName: 'users.*', icon: UserCog },
+        { name: 'Tasas de Cambio', href: route('exchange-rates.index'), routeName: 'exchange-rates.*', icon: Settings },
     ];
 
     useEffect(() => {
@@ -118,14 +118,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
                     <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
                         {navigation.map((item) => {
-                            const active = route().current(item.href.split('?')[0].split('/').pop() || '');
+                            const active = route().current(item.routeName);
                             return (
                                 <Link
                                     key={item.name}
                                     href={item.href}
                                     className={`
                                         flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors text-sm font-medium
-                                        ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}
+                                        ${active ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}
                                     `}
                                 >
                                     <item.icon className={`h-5 w-5 ${active ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
