@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
@@ -14,6 +14,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { name: 'Clientes', href: route('clients.index'), icon: UserSquare2 },
         { name: 'Inventario', href: route('products.index'), icon: PackageCheck },
         { name: 'Gastos', href: route('expenses.index'), icon: Receipt },
+        { name: 'Usuarios', href: route('users.index'), icon: UserCog },
         { name: 'Tasas de Cambio', href: route('exchange-rates.index'), icon: Settings },
     ];
 

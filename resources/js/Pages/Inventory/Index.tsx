@@ -138,21 +138,40 @@ export default function InventoryIndex({ products }: { products: Product[] }) {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="style">Estilo</Label>
-                    <Input 
-                        id="style" 
-                        value={data.style} 
-                        onChange={e => setData('style', e.target.value)} 
-                        placeholder="Ej. Oversize, Normal"
-                    />
+                    <select
+                        id="style"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={data.style}
+                        onChange={e => setData('style', e.target.value)}
+                    >
+                        <option value="">-- Seleccione estilo --</option>
+                        <option value="Oversize">Oversize</option>
+                        <option value="Normal / Clásico">Normal / Clásico</option>
+                        <option value="Slim Fit">Slim Fit</option>
+                        <option value="Cropped">Cropped</option>
+                        <option value="Franela Sin Mangas">Franela Sin Mangas</option>
+                        <option value="Deportivo">Deportivo</option>
+                        <option value="Otro">Otro</option>
+                    </select>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="fabric_type">Tipo de tela</Label>
-                    <Input 
-                        id="fabric_type" 
-                        value={data.fabric_type} 
-                        onChange={e => setData('fabric_type', e.target.value)} 
-                        placeholder="Ej. Algodón"
-                    />
+                    <select
+                        id="fabric_type"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={data.fabric_type}
+                        onChange={e => setData('fabric_type', e.target.value)}
+                    >
+                        <option value="">-- Seleccione tela --</option>
+                        <option value="Algodón">Algodón</option>
+                        <option value="Microdurazno">Microdurazno</option>
+                        <option value="Polialgodón">Polialgodón</option>
+                        <option value="Poliéster">Poliéster</option>
+                        <option value="Muselina">Muselina</option>
+                        <option value="Lino">Lino</option>
+                        <option value="Acetal">Acetal / Mono</option>
+                        <option value="Otro">Otro</option>
+                    </select>
                 </div>
                 
                 {/* Tallas */}

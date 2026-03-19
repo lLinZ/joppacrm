@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('products', \App\Http\Controllers\ProductController::class);
     Route::resource('expenses', \App\Http\Controllers\ExpenseController::class);
     Route::resource('exchange-rates', \App\Http\Controllers\ExchangeRateController::class);
+    Route::resource('users', \App\Http\Controllers\UserController::class);
 });
 
 require __DIR__.'/auth.php';

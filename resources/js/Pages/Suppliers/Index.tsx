@@ -129,12 +129,21 @@ export default function SuppliersIndex({ suppliers }: { suppliers: Supplier[] })
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="type">Tipo de proveedor</Label>
-                    <Input 
-                        id="type" 
-                        value={data.type} 
-                        onChange={e => setData('type', e.target.value)} 
-                        placeholder="Ej. Franelas Oversize"
-                    />
+                    <select
+                        id="type"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={data.type}
+                        onChange={e => setData('type', e.target.value)}
+                    >
+                        <option value="">-- Seleccione un tipo --</option>
+                        <option value="Telas y Textiles">Telas y Textiles</option>
+                        <option value="Confección y Costura">Confección y Costura</option>
+                        <option value="Insumos Sublimación">Insumos Sublimación</option>
+                        <option value="Publicidad e Imprenta">Publicidad e Imprenta</option>
+                        <option value="Equipos y Herramientas">Equipos y Herramientas</option>
+                        <option value="Servicios Generales">Servicios Generales</option>
+                        <option value="Otro">Otro</option>
+                    </select>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="phone">Contacto</Label>
@@ -146,12 +155,22 @@ export default function SuppliersIndex({ suppliers }: { suppliers: Supplier[] })
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="platform">Plataforma</Label>
-                    <Input 
-                        id="platform" 
-                        value={data.platform} 
-                        onChange={e => setData('platform', e.target.value)} 
-                        placeholder="Facebook, Whatsapp..."
-                    />
+                    <select
+                        id="platform"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={data.platform}
+                        onChange={e => setData('platform', e.target.value)}
+                    >
+                        <option value="">-- Seleccione medio --</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="WhatsApp">WhatsApp</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="TikTok">TikTok</option>
+                        <option value="Sitio Web">Sitio Web</option>
+                        <option value="Tienda Física">Tienda Física</option>
+                        <option value="Catálogo/Referencia">Catálogo/Referencia</option>
+                        <option value="Otro">Otro</option>
+                    </select>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="instagram">Instagram</Label>
@@ -163,14 +182,19 @@ export default function SuppliersIndex({ suppliers }: { suppliers: Supplier[] })
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="reliability">Fiabilidad (1-5)</Label>
-                    <Input 
-                        id="reliability" 
-                        type="number"
-                        min="1"
-                        max="5"
-                        value={data.reliability} 
-                        onChange={e => setData('reliability', e.target.value)} 
-                    />
+                    <select
+                        id="reliability"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={data.reliability}
+                        onChange={e => setData('reliability', e.target.value)}
+                    >
+                        <option value="">-- Sin puntuar --</option>
+                        <option value="5">⭐⭐⭐⭐⭐ (Excelente)</option>
+                        <option value="4">⭐⭐⭐⭐ (Muy Bueno)</option>
+                        <option value="3">⭐⭐⭐ (Aceptable)</option>
+                        <option value="2">⭐⭐ (Regular)</option>
+                        <option value="1">⭐ (Malo / Evitar)</option>
+                    </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="wholesale_price">Precio al mayor</Label>
