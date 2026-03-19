@@ -14,6 +14,7 @@ interface ExchangeRate {
     id: number;
     currency: string;
     rate: number;
+    updated_at?: string;
 }
 
 export default function ExchangeRatesIndex({ rates, histories = [] }: { rates: ExchangeRate[], histories?: any[] }) {
@@ -129,6 +130,18 @@ export default function ExchangeRatesIndex({ rates, histories = [] }: { rates: E
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 4
                 }).format(rate);
+            }
+        },
+        {
+            accessorKey: 'updated_at',
+            header: 'Última Actualización',
+            cell: ({ row }: any) => {
+                const date = row.original.updated_at;
+                if (!date) return '-';
+                return new Intl.DateTimeFormat('es-VE', { 
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                }).format(new Date(date));
             }
         },
         {
