@@ -1,6 +1,6 @@
-import ApplicationLogo from '@/components/ApplicationLogo';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { ThemeToggle } from '@/Components/ui/ThemeToggle';
 import { PropsWithChildren } from 'react';
 
 export default function Guest({ children }: PropsWithChildren) {

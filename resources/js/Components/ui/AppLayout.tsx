@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Button } from '@/Components/ui/button';
+import { ThemeToggle } from '@/Components/ui/ThemeToggle';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -82,18 +82,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     </nav>
 
                     <div className="p-4 border-t border-border">
-                        <div className="flex items-center gap-3 px-3 py-2">
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate">
-                                    {user.name}
-                                </p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                    {user.email}
-                                </p>
-                            </div>
-                            
-                            {/* Theme Picker */}
-                            <div className="flex items-center gap-1.5 mr-2">
+                        {/* Theme Picker */}
+                        <div className="flex items-center justify-between mb-4 px-3">
+                            <span className="text-xs font-semibold text-muted-foreground">Color</span>
+                            <div className="flex items-center gap-1.5">
                                 {themes.map(t => (
                                     <button
                                         key={t.id}
@@ -104,9 +96,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                                     />
                                 ))}
                             </div>
+                        </div>
+
+                        {/* User Info & Actions */}
+                        <div className="flex items-center gap-2 px-3">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">
+                                    {user.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                    {user.email}
+                                </p>
+                            </div>
 
                             <ThemeToggle />
-                            <Link href={route('logout')} method="post" as="button">
+                            <Link href={route('logout')} method="post" as="button" className="shrink-0">
                                 <Button variant="ghost" size="icon" title="Cerrar sesión">
                                     <LogOut className="h-5 w-5 text-muted-foreground" />
                                 </Button>

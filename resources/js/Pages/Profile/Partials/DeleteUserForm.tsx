@@ -1,4 +1,4 @@
-import DangerButton from '@/components/DangerButton';
+import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';

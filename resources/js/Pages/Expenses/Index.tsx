@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
-import { AppLayout } from '@/components/ui/AppLayout';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { DataTable } from '@/components/ui/DataTable';
-import { FormModal } from '@/components/ui/FormModal';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { SearchInput } from '@/components/ui/SearchInput';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { AppLayout } from '@/Components/ui/AppLayout';
+import { PageHeader } from '@/Components/ui/PageHeader';
+import { DataTable } from '@/Components/ui/DataTable';
+import { FormModal } from '@/Components/ui/FormModal';
+import { ConfirmDialog } from '@/Components/ui/ConfirmDialog';
+import { SearchInput } from '@/Components/ui/SearchInput';
+import { Button } from '@/Components/ui/button';
+import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
 import { 
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
+} from '@/Components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, Pencil, Trash } from 'lucide-react';
 
 interface Expense {

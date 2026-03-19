@@ -1,8 +1,8 @@
 import { Head } from '@inertiajs/react';
-import { AppLayout } from '@/components/ui/AppLayout';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { StatCard } from '@/components/ui/StatCard';
-import { DataTable } from '@/components/ui/DataTable';
+import { AppLayout } from '@/Components/ui/AppLayout';
+import { PageHeader } from '@/Components/ui/PageHeader';
+import { StatCard } from '@/Components/ui/StatCard';
+import { DataTable } from '@/Components/ui/DataTable';
 import { Users, ShoppingCart, Package, CreditCard } from 'lucide-react';
 
 interface Product {
