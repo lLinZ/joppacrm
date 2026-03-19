@@ -14,4 +14,9 @@ class ExchangeRate extends Model
     protected $casts = [
         'rate' => 'decimal:4',
     ];
+
+    public function histories()
+    {
+        return $this->hasMany(ExchangeRateHistory::class);
+    }
 }
