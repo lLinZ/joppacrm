@@ -2,6 +2,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    theme?: string;
     email_verified_at?: string;
 }
 

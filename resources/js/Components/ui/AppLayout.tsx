@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -17,6 +17,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { name: 'Usuarios', href: route('users.index'), icon: UserCog },
         { name: 'Tasas de Cambio', href: route('exchange-rates.index'), icon: Settings },
     ];
+
+    useEffect(() => {
+        const root = document.documentElement;
+        root.classList.remove('theme-zinc', 'theme-blue', 'theme-emerald', 'theme-rose', 'theme-orange');
+        if (user.theme && user.theme !== 'zinc') {
+            root.classList.add(`theme-${user.theme}`);
+        }
+    }, [user.theme]);
+
+    const themes = [
+        { id: 'zinc', color: 'bg-zinc-500' },
+        { id: 'blue', color: 'bg-blue-600' },
+        { id: 'emerald', color: 'bg-emerald-600' },
+        { id: 'rose', color: 'bg-rose-600' },
+        { id: 'orange', color: 'bg-orange-500' },
+    ];
+
+    const changeTheme = (themeId: string) => {
+        if (user.theme === themeId) return;
+        router.patch(route('profile.theme.update'), { theme: themeId }, { preserveScroll: true });
+    };
 
     return (
         <div className="min-h-screen bg-background text-foreground flex">
@@ -70,6 +91,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                                     {user.email}
                                 </p>
                             </div>
+                            
+                            {/* Theme Picker */}
+                            <div className="flex items-center gap-1.5 mr-2">
+                                {themes.map(t => (
+                                    <button
+                                        key={t.id}
+                                        onClick={() => changeTheme(t.id)}
+                                        className={`w-5 h-5 rounded-full ${t.color} ${user.theme === t.id ? 'ring-2 ring-offset-2 ring-primary ring-offset-background' : 'hover:scale-110 transition-transform'}`}
+                                        title={`Tema: ${t.id}`}
+                                        aria-label={`Seleccionar tema ${t.id}`}
+                                    />
+                                ))}
+                            </div>
+
                             <ThemeToggle />
                             <Link href={route('logout')} method="post" as="button">
                                 <Button variant="ghost" size="icon" title="Cerrar sesión">
