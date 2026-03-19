@@ -3,10 +3,12 @@ import { Link, usePage, router } from '@inertiajs/react';
 import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { ThemeToggle } from '@/Components/ui/ThemeToggle';
+import { Toaster, toast } from 'sonner';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const user = usePage().props.auth.user;
+    const { auth, flash } = usePage().props as any;
+    const user = auth.user;
 
     const navigation = [
         { name: 'Dashboard', href: route('dashboard'), icon: LayoutDashboard },
@@ -26,6 +28,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         }
     }, [user.theme]);
 
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success('Completado', { description: flash.success });
+        }
+        if (flash?.error) {
+            toast.error('Error', { description: flash.error });
+        }
+    }, [flash]);
+
     const themes = [
         { id: 'zinc', color: 'bg-zinc-500' },
         { id: 'blue', color: 'bg-blue-600' },
@@ -41,6 +52,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="min-h-screen bg-background text-foreground flex">
+            {/* Global Toaster Integration */}
+            <Toaster position="top-right" richColors expand={false} />
+            
             {/* Mobile Sidebar Overlay */}
             {sidebarOpen && (
                 <div 
