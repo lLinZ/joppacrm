@@ -94,13 +94,17 @@ export default function Login({
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="rounded-md text-sm text-muted-foreground underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                            className="rounded-md text-sm text-slate-400 underline hover:text-white focus:outline-none"
                         >
                             Forgot your password?
                         </Link>
                     )}
 
-                    <PrimaryButton className="ms-4 bg-gradient-to-r from-indigo-600 to-purple-600 border-0 hover:scale-[1.02] transition-transform shadow-lg shadow-indigo-500/30 font-semibold" disabled={processing}>
+                    <PrimaryButton 
+                        className="ms-4 border-0 hover:scale-[1.02] transition-transform font-semibold text-white" 
+                        style={{ background: 'linear-gradient(135deg, #0B3022, #1a5c40)', boxShadow: '0 4px 14px rgba(11,48,34,0.35)' }}
+                        disabled={processing}
+                    >
                         Ingresar
                     </PrimaryButton>
                 </div>

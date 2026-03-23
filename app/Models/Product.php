@@ -25,6 +25,17 @@ class Product extends Model
         'cost',
         'supplier_id',
         'category_id',
+        'show_in_catalog',
+        'images',
+        'catalog_order',
+        'product_information',
+        'product_features',
+        'product_design',
+    ];
+
+    protected $casts = [
+        'images' => 'array',
+        'show_in_catalog' => 'boolean',
     ];
 
     public function supplier()
@@ -35,5 +46,10 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function collections()
+    {
+        return $this->belongsToMany(Collection::class);
     }
 }

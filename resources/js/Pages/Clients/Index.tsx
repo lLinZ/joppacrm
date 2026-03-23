@@ -9,13 +9,8 @@ import { SearchInput } from '@/Components/ui/SearchInput';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
-import { 
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger 
-} from '@/Components/ui/dropdown-menu';
-import { Plus, MoreHorizontal, Pencil, Trash } from 'lucide-react';
+import { Plus, Pencil, Trash, Eye } from 'lucide-react';
+import { ClientDetailModal } from '@/Components/Clients/ClientDetailModal';
 
 interface Client {
     id: number;
@@ -24,6 +19,7 @@ interface Client {
     phone: string | null;
     address: string | null;
     notes: string | null;
+    created_at: string;
 }
 
 export default function ClientsIndex({ clients }: { clients: Client[] }) {
@@ -31,6 +27,7 @@ export default function ClientsIndex({ clients }: { clients: Client[] }) {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
@@ -67,6 +64,11 @@ export default function ClientsIndex({ clients }: { clients: Client[] }) {
     const openDeleteDialog = (client: Client) => {
         setSelectedClient(client);
         setIsDeleteDialogOpen(true);
+    };
+
+    const openDetailDialog = (client: Client) => {
+        setSelectedClient(client);
+        setIsDetailModalOpen(true);
     };
 
     const handleCreate = (e: React.FormEvent) => {
@@ -149,25 +151,16 @@ export default function ClientsIndex({ clients }: { clients: Client[] }) {
             cell: ({ row }: any) => {
                 const client = row.original;
                 return (
-                    <div className="text-right">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Abrir menú</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openEditDialog(client)}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openDeleteDialog(client)} className="text-destructive focus:text-destructive">
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Eliminar
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                    <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openDetailDialog(client)} title="Ver Detalles">
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(client)} title="Editar">
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => openDeleteDialog(client)} title="Eliminar">
+                            <Trash className="h-4 w-4" />
+                        </Button>
                     </div>
                 );
             },
@@ -224,6 +217,12 @@ export default function ClientsIndex({ clients }: { clients: Client[] }) {
                 title="Eliminar Cliente"
                 description={`¿Estás seguro de que deseas eliminar a ${selectedClient?.name}? Esta acción no se puede deshacer.`}
                 onConfirm={handleDelete}
+            />
+
+            <ClientDetailModal 
+                client={selectedClient} 
+                open={isDetailModalOpen} 
+                onOpenChange={setIsDetailModalOpen} 
             />
         </AppLayout>
     );

@@ -22,13 +22,13 @@ interface DataTableProps<T> {
 
 export function DataTable<T>({ columns, data }: DataTableProps<T>) {
     return (
-        <div className="rounded-md border bg-card text-card-foreground shadow-sm overflow-hidden">
+        <div className="rounded-md shadow-sm overflow-hidden backdrop-blur-xl" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', borderWidth: '1px' }}>
             <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                        <TableRow className="bg-white/5 hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                             {columns.map((column, index) => (
-                                <TableHead key={index} className="whitespace-nowrap font-medium text-muted-foreground">
+                                <TableHead key={index} className="whitespace-nowrap font-medium text-slate-300">
                                     {column.header}
                                 </TableHead>
                             ))}
@@ -46,7 +46,7 @@ export function DataTable<T>({ columns, data }: DataTableProps<T>) {
                             </TableRow>
                         ) : (
                             data.map((row, rowIndex) => (
-                                <TableRow key={rowIndex} className="hover:bg-muted/50 transition-colors">
+                                <TableRow key={rowIndex} className="hover:bg-white/5 transition-colors text-white" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                                     {columns.map((column, colIndex) => (
                                         <TableCell key={colIndex} className="py-3">
                                             {column.cell 

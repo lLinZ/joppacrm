@@ -17,6 +17,35 @@ class ClientController extends Controller
         ]);
     }
 
+    public function show(Client $client)
+    {
+        // Query orders associated with this client's email or phone
+        $ordersQuery = \App\Models\Order::query();
+        
+        $ordersQuery->where(function($q) use ($client) {
+            if ($client->email) {
+                $q->orWhere('email', $client->email);
+            }
+            if ($client->phone) {
+                $q->orWhere('phone', $client->phone);
+            }
+        });
+
+        // Ensure we don't query accidentally all if both are null
+        if (!$client->email && !$client->phone) {
+            $orders = [];
+        } else {
+            $orders = $ordersQuery->with('items.catalogProduct')
+                                  ->orderByDesc('created_at')
+                                  ->get();
+        }
+
+        return response()->json([
+            'client' => $client,
+            'orders' => $orders
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -26,6 +55,30 @@ class ClientController extends Controller
             'address' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
+
+        $validated['name'] = ucwords(mb_strtolower($validated['name'], 'UTF-8'));
+        
+        if (!empty($validated['email'])) {
+            $validated['email'] = mb_strtolower($validated['email'], 'UTF-8');
+        }
+        
+        if (!empty($validated['phone'])) {
+            $hasPlus = str_starts_with(trim($validated['phone']), '+');
+            $phone = preg_replace('/[^0-9]/', '', $validated['phone']);
+            
+            if ($hasPlus) {
+                $validated['phone'] = '+' . $phone;
+            } else {
+                if (str_starts_with($phone, '0')) {
+                    $phone = ltrim($phone, '0');
+                    $validated['phone'] = '+58' . $phone;
+                } elseif (str_starts_with($phone, '58')) {
+                    $validated['phone'] = '+' . $phone;
+                } else {
+                    $validated['phone'] = '+58' . $phone;
+                }
+            }
+        }
 
         Client::create($validated);
 
@@ -41,6 +94,30 @@ class ClientController extends Controller
             'address' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
+
+        $validated['name'] = ucwords(mb_strtolower($validated['name'], 'UTF-8'));
+        
+        if (!empty($validated['email'])) {
+            $validated['email'] = mb_strtolower($validated['email'], 'UTF-8');
+        }
+        
+        if (!empty($validated['phone'])) {
+            $hasPlus = str_starts_with(trim($validated['phone']), '+');
+            $phone = preg_replace('/[^0-9]/', '', $validated['phone']);
+            
+            if ($hasPlus) {
+                $validated['phone'] = '+' . $phone;
+            } else {
+                if (str_starts_with($phone, '0')) {
+                    $phone = ltrim($phone, '0');
+                    $validated['phone'] = '+58' . $phone;
+                } elseif (str_starts_with($phone, '58')) {
+                    $validated['phone'] = '+' . $phone;
+                } else {
+                    $validated['phone'] = '+58' . $phone;
+                }
+            }
+        }
 
         $client->update($validated);
 

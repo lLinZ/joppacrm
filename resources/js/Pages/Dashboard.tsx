@@ -82,7 +82,7 @@ export default function Dashboard({ stats, low_stock_products }: DashboardProps)
                 />
             </div>
 
-            <h3 className="text-xl font-bold tracking-tight mb-4 text-destructive">
+            <h3 className="text-xl font-bold tracking-tight mb-4 text-white">
                 Productos con Stock Bajo
             </h3>
             
