@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog, ShoppingBag, Layers, Store, Palette, Globe, Bell, Check } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
-import { ThemeToggle } from '@/Components/ui/ThemeToggle';
 import { Toaster, toast } from 'sonner';
 
 function NotificationBell({ unreadCount, notifications, direction = 'up' }: { unreadCount: number, notifications: any[], direction?: 'up'|'down' }) {
@@ -203,14 +202,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
             `} style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(10,10,10,0.65)' }}>
                 <div className="flex flex-col h-full relative z-10">
-                    <div className="h-16 flex items-center px-6 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                        <span className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    <div className="h-16 flex items-center px-6 border-b justify-between" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                        <div className="flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #0B3022, #1a5c40)', boxShadow: '0 2px 10px rgba(11,48,34,0.35)' }}>
                                 J
                             </div>
-                            Joppa CRM
-                        </span>
-                        <Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={() => setSidebarOpen(false)}>
+                            <NotificationBell unreadCount={auth.unread_count || 0} notifications={auth.notifications || []} direction="down" />
+                        </div>
+                        <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
                             <X className="h-5 w-5" />
                         </Button>
                     </div>
@@ -284,8 +283,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                                 </p>
                             </div>
 
-                            <NotificationBell unreadCount={auth.unread_count || 0} notifications={auth.notifications || []} direction="up" />
-                            <ThemeToggle />
                             <Link href={route('logout')} method="post" as="button" className="shrink-0">
                                 <Button variant="ghost" size="icon" title="Cerrar sesión">
                                     <LogOut className="h-5 w-5 text-muted-foreground" />
