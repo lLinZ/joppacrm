@@ -207,6 +207,12 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
                                                     <p className="font-medium text-foreground">{item.product_name}</p>
                                                 )}
                                                 
+                                                {(item.size || item.color) && (
+                                                    <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+                                                        {item.color} {item.color && item.size && '•'} {item.size && `Talla: ${item.size}`}
+                                                    </p>
+                                                )}
+                                                
                                                 {/* INVENTORY BADGE */}
                                                 {item.catalog_product?.inventory_product && (
                                                     <p className="text-xs mt-1">

@@ -28,6 +28,8 @@ class OrderController extends Controller
             'items.*.product_name' => 'required|string|max:255',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric',
+            'items.*.size' => 'nullable|string|max:50',
+            'items.*.color' => 'nullable|string|max:50',
         ]);
 
         // Normalize data
@@ -101,6 +103,8 @@ class OrderController extends Controller
                 'product_name' => $item['product_name'],
                 'quantity' => $item['quantity'],
                 'price' => $item['price'],
+                'size' => $item['size'] ?? null,
+                'color' => $item['color'] ?? null,
             ]);
         }
 
