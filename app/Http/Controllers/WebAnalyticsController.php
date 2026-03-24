@@ -12,8 +12,15 @@ class WebAnalyticsController extends Controller
         $startDate = now()->subDays($days - 1)->startOfDay();
 
         $search = $request->get('search');
+        $sortField = $request->get('sort', 'last_active_at');
+        $sortDir = strtolower($request->get('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
 
-        $query = \App\Models\WebTrafficSession::orderBy('last_active_at', 'desc');
+        $allowedSorts = ['visitor_id', 'ip_address', 'source', 'started_at', 'duration_seconds', 'entry_url', 'last_active_at'];
+        if (!in_array($sortField, $allowedSorts)) {
+            $sortField = 'last_active_at';
+        }
+
+        $query = \App\Models\WebTrafficSession::orderBy($sortField, $sortDir);
 
         if ($search) {
             $query->where(function ($q) use ($search) {

@@ -32,6 +32,9 @@ interface WebTrafficProps {
             label: string;
             active: boolean;
         }[];
+        total: number;
+        from: number;
+        to: number;
     };
 }
 
@@ -74,15 +77,33 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
         return '';
     });
 
+    const currentSort = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('sort') || 'last_active_at' : 'last_active_at';
+    const currentDir = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('dir') || 'desc' : 'desc';
+
     const handleFilter = (d: number) => {
         router.get(route('web.traffic'), { days: d, search: searchQuery }, { preserveState: true });
     };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get(route('web.traffic'), { days: metrics.days, search: searchQuery }, { preserveState: true });
+        router.get(route('web.traffic'), { days: metrics.days, search: searchQuery, sort: currentSort, dir: currentDir }, { preserveState: true });
     };
 
+    const handleSort = (field: string) => {
+        const newDir = currentSort === field && currentDir === 'asc' ? 'desc' : 'asc';
+        router.get(route('web.traffic'), { days: metrics.days, search: searchQuery, sort: field, dir: newDir }, { preserveState: true });
+    };
+
+    const SortIcon = ({ field }: { field: string }) => {
+        if (currentSort !== field) return <span className="opacity-30 ml-1">↕</span>;
+        return <span className="ml-1 text-emerald-600">{currentDir === 'asc' ? '↑' : '↓'}</span>;
+    };
+
+    const formatPaginationLabel = (label: string) => {
+        if (label.includes('Previous') || label.includes('previous')) return '&laquo; Anterior';
+        if (label.includes('Next') || label.includes('next')) return 'Siguiente &raquo;';
+        return label;
+    };
     const parseDevice = (ua: string | null) => {
         if (!ua) return 'Desconocido';
         if (ua.includes('iPhone')) return '📱 iPhone';
@@ -280,7 +301,7 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                         <h3 className="text-lg font-semibold flex items-center gap-2">
                             <Globe className="h-5 w-5 text-primary" /> Conexiones Históricas
                         </h3>
-                        <p className="text-sm text-muted-foreground mt-1">Registro de todas las sesiones ordenadas por última actividad.</p>
+                        <p className="text-sm text-muted-foreground mt-1">Mostrando {recentSessions.from || 0} - {recentSessions.to || 0} de {recentSessions.total} sesiones.</p>
                     </div>
                     <form onSubmit={handleSearch} className="flex items-center gap-2">
                         <input
@@ -305,12 +326,12 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-muted/50 border-b border-border">
                                 <tr>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">ID Anónimo</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">IP / Dispositivo</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Fuente</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Inicio</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Duración</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Última URL</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('visitor_id')}>ID Anónimo <SortIcon field="visitor_id" /></th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('ip_address')}>IP / Dispositivo <SortIcon field="ip_address" /></th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('source')}>Fuente <SortIcon field="source" /></th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('started_at')}>Inicio <SortIcon field="started_at" /></th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('duration_seconds')}>Duración <SortIcon field="duration_seconds" /></th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('entry_url')}>Última URL <SortIcon field="entry_url" /></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -352,10 +373,10 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                             {recentSessions.links.map((link, idx) => (
                                 <button
                                     key={idx}
-                                    onClick={() => link.url && router.get(link.url, { search: searchQuery }, { preserveState: true })}
+                                    onClick={() => link.url && router.get(link.url, { search: searchQuery, sort: currentSort, dir: currentDir }, { preserveState: true })}
                                     disabled={!link.url}
                                     className={`px-3 py-1.5 text-sm rounded-md transition-colors ${link.active ? 'bg-primary text-primary-foreground font-medium' : 'bg-background border border-border text-foreground hover:bg-muted'} ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                    dangerouslySetInnerHTML={{ __html: formatPaginationLabel(link.label) }}
                                 />
                             ))}
                         </div>
