@@ -150,7 +150,7 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                                     <th className="px-6 py-4 font-semibold text-muted-foreground">ID Anónimo</th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground">Fecha y Hora de Inicio</th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground">Duración en Web</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">URL de Entrada</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Última URL Vista</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">

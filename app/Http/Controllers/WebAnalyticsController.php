@@ -21,7 +21,7 @@ class WebAnalyticsController extends Controller
                     'visitor_id' => substr($session->visitor_id, 0, 8) . '...',
                     'entry_url' => $session->entry_url,
                     'started_at' => $session->started_at->format('Y-m-d H:i:s'),
-                    'duration_formatted' => floor($session->duration_seconds / 60) . 'm ' . ($session->duration_seconds % 60) . 's',
+                    'duration_formatted' => floor(abs($session->duration_seconds) / 60) . 'm ' . (abs($session->duration_seconds) % 60) . 's',
                 ];
             });
 
@@ -54,7 +54,7 @@ class WebAnalyticsController extends Controller
             $totalDuration += ($count * $avgDur);
         }
 
-        $avgGlobalDuration = $totalSessions > 0 ? floor($totalDuration / $totalSessions) : 0;
+        $avgGlobalDuration = abs($totalSessions > 0 ? floor($totalDuration / $totalSessions) : 0);
 
         return inertia('Analytics/WebTraffic', [
             'metrics' => [

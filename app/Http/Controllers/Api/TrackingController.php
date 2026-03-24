@@ -29,8 +29,15 @@ class TrackingController extends Controller
         if ($session) {
             // Actualizar sesión existente
             $session->last_active_at = $now;
-            // Calcular duración en segundos
-            $session->duration_seconds = $session->last_active_at->diffInSeconds($session->started_at);
+            
+            // Actualizamos la URL para que capture slugs de navegación SPA o últimas páginas vistas
+            if ($url) {
+                $session->entry_url = $url;
+            }
+            
+            // Calcular duración en segundos asegurando que no sea negativo (diferencia de timestamps absolutos)
+            $session->duration_seconds = abs($now->getTimestamp() - $session->started_at->getTimestamp());
+            
             $session->save();
         } else {
             // Crear nueva sesión (primera vez o pasaron >30 mins)
