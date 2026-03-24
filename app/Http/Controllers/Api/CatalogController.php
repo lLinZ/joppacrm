@@ -56,9 +56,9 @@ class CatalogController extends Controller
     /**
      * Return a single catalog product.
      */
-    public function show($id)
+    public function show($identifier)
     {
-        $product = CatalogProduct::find($id);
+        $product = CatalogProduct::where('slug', $identifier)->orWhere('id', $identifier)->first();
         
         if (!$product || !$product->is_published) {
             return response()->json(['message' => 'Not found'], 404);
@@ -72,9 +72,9 @@ class CatalogController extends Controller
     /**
      * Increment the views count for a product.
      */
-    public function incrementView($id)
+    public function incrementView($identifier)
     {
-        $product = CatalogProduct::find($id);
+        $product = CatalogProduct::where('slug', $identifier)->orWhere('id', $identifier)->first();
         
         if ($product) {
             $product->increment('views_count');

@@ -11,6 +11,7 @@ class CatalogProduct extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'price',
         'description',
         'images',
@@ -30,6 +31,17 @@ class CatalogProduct extends Model
         'images' => 'array',
         'is_published' => 'boolean',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            if (empty($model->slug)) {
+                $model->slug = \Illuminate\Support\Str::slug($model->name);
+            }
+        });
+    }
 
     public function collections()
     {
