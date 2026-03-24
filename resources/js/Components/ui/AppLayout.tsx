@@ -1,9 +1,62 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog, ShoppingBag, Layers, Store, Palette, Globe } from 'lucide-react';
+import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog, ShoppingBag, Layers, Store, Palette, Globe, Bell, Check } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { ThemeToggle } from '@/Components/ui/ThemeToggle';
 import { Toaster, toast } from 'sonner';
+
+function NotificationBell({ unreadCount, notifications, direction = 'up' }: { unreadCount: number, notifications: any[], direction?: 'up'|'down' }) {
+    const [open, setOpen] = useState(false);
+    
+    const markAsRead = () => {
+        if (unreadCount > 0) {
+            router.post(route('notifications.mark-read'), {}, { preserveScroll: true, preserveState: true });
+        }
+    };
+
+    return (
+        <div className="relative">
+            <Button variant="ghost" size="icon" onClick={() => setOpen(!open)} className="relative text-slate-300 hover:text-white">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-black">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                )}
+            </Button>
+            
+            {open && (
+                <>
+                    <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+                    <div className={`absolute right-0 w-80 rounded-xl border border-white/10 bg-[#121212] shadow-2xl z-50 overflow-hidden flex flex-col max-h-[400px] ${direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                        <div className="p-3 border-b border-white/10 flex items-center justify-between bg-white/5">
+                            <h3 className="font-semibold text-sm text-white">Notificaciones</h3>
+                            {unreadCount > 0 && (
+                                <button onClick={markAsRead} className="text-xs text-primary hover:underline flex items-center gap-1">
+                                    <Check className="h-3 w-3" /> Marcar leídas
+                                </button>
+                            )}
+                        </div>
+                        <div className="overflow-y-auto flex-1 p-2">
+                            {notifications.length === 0 ? (
+                                <div className="p-4 text-center text-sm text-slate-400">No hay notificaciones recientes.</div>
+                            ) : (
+                                <div className="space-y-1">
+                                    {notifications.map((n: any) => (
+                                        <div key={n.id} className="p-3 rounded-lg hover:bg-white/5 transition-colors text-sm">
+                                            <p className="font-semibold text-white">{n.data.title}</p>
+                                            <p className="text-slate-400 mt-0.5 text-xs line-clamp-2">{n.data.message}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
 
 // Helper function to convert HEX to HSL for Tailwind CSS variable injection
 function hexToHSL(hex: string) {
@@ -82,26 +135,37 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         }
     }, [flash]);
 
-    // Global listener for new orders
+    // Global listener for new orders and notifications
     useEffect(() => {
         if (!window.Echo) return;
 
-        const channel = window.Echo.channel('orders');
-        channel.listen('.order.created', (e: any) => {
-            toast.success('¡Nueva Orden Recibida!', { 
-                description: `Orden #${e.order.id} de ${e.order.name} por $${Number(e.order.total_amount).toLocaleString('es-AR')}`,
-                duration: 8000,
-                action: {
-                    label: 'Ver',
-                    onClick: () => router.visit(route('orders.index'))
-                }
+        // Listener de base de datos de Laravel (Notificaciones genéricas)
+        const userId = user.id;
+        window.Echo.private(`App.Models.User.${userId}`)
+            .notification((notification: any) => {
+                // Reproducir sonido
+                try {
+                    const audio = new Audio('/sounds/notification.ogg');
+                    audio.play().catch(e => console.log('Audio error:', e));
+                } catch (err) {}
+
+                toast.success(notification.title || 'Nueva Notificación', {
+                    description: notification.message,
+                    duration: 8000,
+                    action: notification.order_id ? {
+                        label: 'Ver Orden',
+                        onClick: () => router.visit(route('orders.index'))
+                    } : undefined
+                });
+                
+                // Recargar props para actualizar el contador
+                router.reload({ only: ['auth'] });
             });
-        });
 
         return () => {
-            channel.stopListening('.order.created');
+            window.Echo.leave(`App.Models.User.${userId}`);
         };
-    }, []);
+    }, [user.id]);
 
     const themes = [
         { id: 'zinc', color: 'bg-zinc-500' },
@@ -220,6 +284,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                                 </p>
                             </div>
 
+                            <NotificationBell unreadCount={auth.unread_count || 0} notifications={auth.notifications || []} direction="up" />
                             <ThemeToggle />
                             <Link href={route('logout')} method="post" as="button" className="shrink-0">
                                 <Button variant="ghost" size="icon" title="Cerrar sesión">
@@ -233,11 +298,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 relative z-10">
-                <header className="h-16 flex items-center px-6 border-b backdrop-blur-xl lg:hidden" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(10,10,10,0.65)' }}>
-                    <Button variant="ghost" size="icon" className="-ml-2 text-white" onClick={() => setSidebarOpen(true)}>
-                        <Menu className="h-5 w-5" />
-                    </Button>
-                    <span className="ml-4 text-xl font-bold text-white">Joppa CRM</span>
+                <header className="h-16 flex items-center justify-between px-6 border-b backdrop-blur-xl lg:hidden" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(10,10,10,0.65)' }}>
+                    <div className="flex items-center">
+                        <Button variant="ghost" size="icon" className="-ml-2 text-white" onClick={() => setSidebarOpen(true)}>
+                            <Menu className="h-5 w-5" />
+                        </Button>
+                        <span className="ml-4 text-xl font-bold text-white">Joppa CRM</span>
+                    </div>
+                    
+                    <NotificationBell unreadCount={auth.unread_count || 0} notifications={auth.notifications || []} direction="down" />
                 </header>
                 
                 <div className="flex-1 p-6 lg:p-8 overflow-y-auto">

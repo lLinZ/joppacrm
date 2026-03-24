@@ -110,6 +110,9 @@ class OrderController extends Controller
 
         broadcast(new \App\Events\OrderCreated($order->fresh()))->toOthers();
 
+        $users = \App\Models\User::all();
+        \Illuminate\Support\Facades\Notification::send($users, new \App\Notifications\NewOrderNotification($order->fresh()));
+
         return response()->json([
             'message' => 'Order created successfully',
             'order' => $order->load(['items.catalogProduct'])

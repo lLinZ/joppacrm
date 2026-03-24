@@ -44,6 +44,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/web-traffic', [\App\Http\Controllers\WebAnalyticsController::class, 'index'])->name('web.traffic');
     
     Route::resource('users', \App\Http\Controllers\UserController::class);
+
+    Route::post('/notifications/mark-read', function (Illuminate\Http\Request $request) {
+        $request->user()->unreadNotifications->markAsRead();
+        return back();
+    })->name('notifications.mark-read');
 });
 
 require __DIR__.'/auth.php';
