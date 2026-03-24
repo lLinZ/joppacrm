@@ -4,7 +4,7 @@ import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, Lo
 import { Button } from '@/Components/ui/button';
 import { Toaster, toast } from 'sonner';
 
-function NotificationBell({ unreadCount, notifications, direction = 'up' }: { unreadCount: number, notifications: any[], direction?: 'up'|'down' }) {
+function NotificationBell({ unreadCount, notifications, direction = 'up', align = 'right' }: { unreadCount: number, notifications: any[], direction?: 'up'|'down', align?: 'left'|'right' }) {
     const [open, setOpen] = useState(false);
     
     const markAsRead = () => {
@@ -27,7 +27,7 @@ function NotificationBell({ unreadCount, notifications, direction = 'up' }: { un
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className={`absolute right-0 w-80 rounded-xl border border-white/10 bg-[#121212] shadow-2xl z-50 overflow-hidden flex flex-col max-h-[400px] ${direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                    <div className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} w-80 rounded-xl border border-white/10 bg-[#121212] shadow-2xl z-50 overflow-hidden flex flex-col max-h-[400px] ${direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
                         <div className="p-3 border-b border-white/10 flex items-center justify-between bg-white/5">
                             <h3 className="font-semibold text-sm text-white">Notificaciones</h3>
                             {unreadCount > 0 && (
@@ -207,7 +207,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #0B3022, #1a5c40)', boxShadow: '0 2px 10px rgba(11,48,34,0.35)' }}>
                                 J
                             </div>
-                            <NotificationBell unreadCount={auth.unread_count || 0} notifications={auth.notifications || []} direction="down" />
+                            <NotificationBell unreadCount={auth.unread_count || 0} notifications={auth.notifications || []} direction="down" align="left" />
                         </div>
                         <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
                             <X className="h-5 w-5" />
