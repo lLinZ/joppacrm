@@ -9,6 +9,7 @@ declare global {
 }
 
 window.Pusher = Pusher;
+window.Pusher.logToConsole = true;
 
 window.Echo = new Echo({
     broadcaster: 'reverb',
