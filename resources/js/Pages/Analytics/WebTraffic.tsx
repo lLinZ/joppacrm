@@ -34,15 +34,15 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
         const channel = window.Echo.join('presence-store');
 
         channel.here((users: any[]) => {
-            // Filtrar administradores si es necesario (el admin tiene ID numérico, los visitantes UUID).
-            setOnlineUsers(users.filter(u => typeof u.id === 'string'));
+            console.log('Reverb: Usuarios actualmente en línea:', users);
+            setOnlineUsers(users);
         })
         .joining((user: any) => {
-            if (typeof user.id === 'string') {
-                setOnlineUsers((prev) => [...prev.filter(u => u.id !== user.id), user]);
-            }
+            console.log('Reverb: Nuevo flujo de usuario conectado:', user);
+            setOnlineUsers((prev) => [...prev.filter(u => u.id !== user.id), user]);
         })
         .leaving((user: any) => {
+            console.log('Reverb: Usuario desconectado:', user);
             setOnlineUsers((prev) => prev.filter(u => u.id !== user.id));
         });
 
