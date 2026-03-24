@@ -118,6 +118,60 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                 </div>
             </div>
 
+            {/* Live Users Section */}
+            {onlineUsers.length > 0 && (
+                <div className="bg-card border border-emerald-500/20 rounded-xl shadow-sm overflow-hidden mb-8">
+                    <div className="p-6 border-b border-border bg-emerald-500/5 flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-semibold flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                                <span className="relative flex h-3 w-3">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                </span>
+                                En Directo: Viendo Ahora
+                            </h3>
+                            <p className="text-sm text-emerald-600/70 dark:text-emerald-400/70 mt-1">
+                                Visitantes activos en tiempo real a través de WebSockets.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-muted/30 border-b border-border">
+                                <tr>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/3">Usuario / ID</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground">URL Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {onlineUsers.map((user) => (
+                                    <tr key={user.id} className="hover:bg-muted/20 transition-colors">
+                                        <td className="px-6 py-4 text-foreground font-medium flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 text-xs font-bold uppercase ring-1 ring-emerald-500/20">
+                                                {user.name ? user.name.substring(0, 2) : 'V'}
+                                            </div>
+                                            <span>{user.name || 'Visitante'}</span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="max-w-[400px] truncate font-medium text-muted-foreground" title={user.url}>
+                                                    {user.url || 'N/A'}
+                                                </div>
+                                                {user.url && user.url !== '/' && (
+                                                    <a href={user.url} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-500 hover:underline text-xs flex items-center gap-1 font-semibold">
+                                                        <Globe className="h-3 w-3" /> Abrir <span className="sr-only">URL</span>
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
             {/* Chart */}
             <div className="bg-card border border-border rounded-xl p-6 shadow-sm mb-8">
                 <h3 className="text-lg font-semibold flex items-center gap-2 mb-6">
