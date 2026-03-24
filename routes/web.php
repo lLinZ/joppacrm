@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('collections', \App\Http\Controllers\CollectionController::class)->except(['show', 'create', 'edit']);
     Route::post('collections/{collection}/products', [\App\Http\Controllers\CollectionController::class, 'syncProducts'])->name('collections.syncProducts');
     Route::resource('catalog-products', \App\Http\Controllers\CatalogProductController::class)->except(['create', 'show']);
+    Route::get('catalog-products/{catalog_product}/analytics', [\App\Http\Controllers\CatalogProductController::class, 'analytics'])->name('catalog-products.analytics');
     Route::resource('expenses', \App\Http\Controllers\ExpenseController::class);
     Route::resource('exchange-rates', \App\Http\Controllers\ExchangeRateController::class);
     Route::resource('orders', \App\Http\Controllers\OrderController::class)->only(['index', 'show']);

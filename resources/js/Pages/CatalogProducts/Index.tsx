@@ -3,7 +3,8 @@ import { Head, router } from '@inertiajs/react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { PageHeader } from '@/Components/ui/PageHeader';
 import { Button } from '@/Components/ui/button';
-import { Store, Plus, FileEdit, Trash2, Globe, Lock, Eye } from 'lucide-react';
+import { Store, Plus, FileEdit, Trash2, Globe, Lock, Eye, BarChart2 } from 'lucide-react';
+import { AnalyticsModal } from '@/Components/Catalog/AnalyticsModal';
 
 interface Collection {
     id: number;
@@ -24,6 +25,8 @@ export default function CatalogProductsIndex({ products }: { products: CatalogPr
     const [adding, setAdding] = useState(false);
     const [form, setForm] = useState({ name: '', price: '' });
     const [processing, setProcessing] = useState(false);
+    
+    const [analyticsProduct, setAnalyticsProduct] = useState<CatalogProduct | null>(null);
 
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
@@ -159,6 +162,9 @@ export default function CatalogProductsIndex({ products }: { products: CatalogPr
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            <Button variant="secondary" size="sm" onClick={() => setAnalyticsProduct(p)} className="h-8 shadow-none bg-primary/10 text-primary hover:bg-primary/20">
+                                                <BarChart2 className="h-3.5 w-3.5 mr-1.5" /> Stats
+                                            </Button>
                                             <Button variant="outline" size="sm" onClick={() => router.get(route('catalog-products.edit', p.id))} className="h-8 shadow-none">
                                                 <FileEdit className="h-3.5 w-3.5 mr-1.5" /> Editar Panel
                                             </Button>
@@ -173,6 +179,12 @@ export default function CatalogProductsIndex({ products }: { products: CatalogPr
                     </table>
                 )}
             </div>
+
+            <AnalyticsModal 
+                open={!!analyticsProduct} 
+                onClose={() => setAnalyticsProduct(null)} 
+                product={analyticsProduct} 
+            />
         </AppLayout>
     );
 }

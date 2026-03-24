@@ -153,4 +153,42 @@ class CatalogProductController extends Controller
 
         return redirect()->route('catalog-products.index')->with('success', 'Producto borrado del catálogo.');
     }
+
+    /**
+     * Return time-series analytics for a specific catalog product.
+     */
+    public function analytics(CatalogProduct $catalog_product, Request $request)
+    {
+        $days = (int) $request->get('days', 30);
+        $startDate = now()->subDays($days - 1)->startOfDay();
+
+        $views = \Illuminate\Support\Facades\DB::table('catalog_product_views')
+            ->selectRaw('DATE(created_at) as date, count(*) as unique_views')
+            ->where('catalog_product_id', $catalog_product->id)
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        // Fill missing days
+        $data = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $dateObj = now()->subDays($i);
+            $dateStr = $dateObj->format('Y-m-d');
+            $displayDate = $dateObj->format('d/m');
+            
+            $row = $views->firstWhere('date', $dateStr);
+            $data[] = [
+                'date' => $dateStr,
+                'display' => $displayDate,
+                'views' => $row ? (int)$row->unique_views : 0,
+            ];
+        }
+
+        return response()->json([
+            'total_unique' => $catalog_product->unique_views_count,
+            'total_raw' => $catalog_product->views_count,
+            'chart_data' => $data,
+        ]);
+    }
 }
