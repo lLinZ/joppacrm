@@ -31,7 +31,7 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
     useEffect(() => {
         if (typeof window === 'undefined' || !window.Echo) return;
 
-        const channel = window.Echo.join('presence-store');
+        const channel = window.Echo.join('store');
 
         channel.here((users: any[]) => {
             console.log('Reverb: Usuarios actualmente en línea:', users);
