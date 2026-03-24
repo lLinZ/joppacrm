@@ -24,3 +24,22 @@ Route::post('/design-requests', [\App\Http\Controllers\Api\DesignRequestControll
 
 // Web traffic heartbeat tracking
 Route::post('/tracking/heartbeat', [\App\Http\Controllers\Api\TrackingController::class, 'heartbeat']);
+
+// Anonymous WebSocket Auth for Store Visitors
+Route::post('/broadcasting/auth', function (Request $request) {
+    if (!$request->has('visitor_id')) {
+        abort(403, 'Visitor ID required');
+    }
+
+    $user = new \Illuminate\Auth\GenericUser([
+        'id' => $request->visitor_id, 
+        'name' => 'Visitante',
+        'current_url' => $request->url ?? '/'
+    ]);
+
+    $request->setUserResolver(function () use ($user) {
+        return $user;
+    });
+
+    return \Illuminate\Support\Facades\Broadcast::auth($request);
+});

@@ -3,6 +3,7 @@ import { AppLayout } from '@/Components/ui/AppLayout';
 import { PageHeader } from '@/Components/ui/PageHeader';
 import { Activity, Users, Clock, Globe } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useEffect, useState } from 'react';
 
 interface WebTrafficProps {
     metrics: {
@@ -25,6 +26,37 @@ interface WebTrafficProps {
 }
 
 export default function WebTraffic({ metrics, chartData, recentSessions }: WebTrafficProps) {
+    const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !window.Echo) return;
+
+        const channel = window.Echo.join('presence-store');
+
+        channel.here((users: any[]) => {
+            // Filtrar administradores si es necesario (el admin tiene ID numérico, los visitantes UUID).
+            setOnlineUsers(users.filter(u => typeof u.id === 'string'));
+        })
+        .joining((user: any) => {
+            if (typeof user.id === 'string') {
+                setOnlineUsers((prev) => [...prev.filter(u => u.id !== user.id), user]);
+            }
+        })
+        .leaving((user: any) => {
+            setOnlineUsers((prev) => prev.filter(u => u.id !== user.id));
+        });
+
+        channel.listenForWhisper('navigated', (e: any) => {
+            setOnlineUsers((prev) => prev.map(u => 
+                u.id === e.id ? { ...u, url: e.url } : u
+            ));
+        });
+
+        return () => {
+            window.Echo.leave('presence-store');
+        };
+    }, []);
+
     const handleFilter = (d: number) => {
         router.get(route('web.traffic'), { days: d }, { preserveState: true });
     };
@@ -36,8 +68,16 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
             <div className="flex items-center justify-between gap-4 mb-8 flex-wrap">
                 <PageHeader
                     title="Monitor de Tráfico Web"
-                    description="Rastrea visitantes globales, tiempo de permanencia y conexiones en tiempo real gracias al motor de latidos."
+                    description="Rastrea visitantes globales, tiempo de permanencia y conexiones en tiempo real gracias al motor de WebSockets."
                 />
+                
+                <div className="flex items-center gap-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-4 py-2.5 rounded-full border border-emerald-500/20 shadow-sm">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                    <span className="font-semibold tracking-wide text-sm">{onlineUsers.length} Usuarios Activos</span>
+                </div>
             </div>
 
             {/* KPI Cards */}
