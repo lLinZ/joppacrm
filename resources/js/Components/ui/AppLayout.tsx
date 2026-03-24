@@ -27,7 +27,7 @@ function NotificationBell({ unreadCount, notifications, direction = 'up', align 
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} w-80 rounded-xl border border-white/10 bg-[#121212] shadow-2xl z-50 overflow-hidden flex flex-col max-h-[400px] ${direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                    <div className={`absolute ${align === 'left' ? 'left-0' : '-right-2 sm:right-0'} w-[calc(100vw-2.5rem)] sm:w-80 rounded-xl border border-white/10 bg-[#121212] shadow-2xl z-50 overflow-hidden flex flex-col max-h-[400px] ${direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
                         <div className="p-3 border-b border-white/10 flex items-center justify-between bg-white/5">
                             <h3 className="font-semibold text-sm text-white">Notificaciones</h3>
                             {unreadCount > 0 && (
