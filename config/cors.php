@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['https://joppa.shop', 'http://localhost:8001', 'http://localhost:3000'],
+    'allowed_origins' => ['*', 'https://joppa.shop', 'https://www.joppa.shop', 'http://localhost:8001', 'http://localhost:3000'],
 
     'allowed_origins_patterns' => [],
 
