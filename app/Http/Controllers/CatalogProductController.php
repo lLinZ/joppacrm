@@ -71,6 +71,7 @@ class CatalogProductController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:catalog_products,slug,' . $catalog_product->id,
             'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'product_information' => 'nullable|string',
@@ -119,6 +120,7 @@ class CatalogProductController extends Controller
 
         $catalog_product->update([
             'name' => $validated['name'],
+            'slug' => $validated['slug'] ?? \Illuminate\Support\Str::slug($validated['name']),
             'price' => $validated['price'],
             'description' => $validated['description'] ?? null,
             'product_information' => $validated['product_information'] ?? null,

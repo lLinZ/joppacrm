@@ -18,6 +18,7 @@ interface InventoryProduct {
 interface CatalogProduct {
     id: number;
     name: string;
+    slug: string | null;
     price: string;
     description: string | null;
     images: string[] | null;
@@ -38,6 +39,7 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
 }) {
     const [form, setForm] = useState({
         name: product.name || '',
+        slug: product.slug || '',
         price: product.price || '',
         description: product.description || '',
         product_information: product.product_information || '',
@@ -142,6 +144,7 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
         const data: any = {
             _method: 'PUT',
             name: form.name,
+            slug: form.slug,
             price: form.price,
             description: form.description,
             product_information: form.product_information,
@@ -205,7 +208,7 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
                     {/* Basic Info Panel */}
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                         <h3 className="text-lg font-semibold text-foreground mb-4">Información Principal</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
                                 <label className="text-sm font-medium text-foreground mb-1.5 block">Nombre del Producto</label>
                                 <input
@@ -214,6 +217,16 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
                                     onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                                     placeholder="Ej. Franela Oversize Tokio"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-foreground mb-1.5 block">Slug (URL)</label>
+                                <input
+                                    type="text"
+                                    value={form.slug}
+                                    onChange={e => setForm(p => ({ ...p, slug: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="Ej. franela-okio (Auto-generado si vacío)"
                                 />
                             </div>
                             <div>
