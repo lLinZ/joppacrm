@@ -1,5 +1,7 @@
 <?php
 
+<?php
+
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
@@ -7,9 +9,13 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('presence-store', function ($user) {
+    $isVisitor = $user instanceof \Illuminate\Auth\GenericUser;
+    
     return [
-        'id' => $user->id, 
-        'name' => 'Visitante ' . strtoupper(substr($user->id, 0, 4)),
-        'url' => $user->current_url ?? null
+        'id' => (string) $user->id, 
+        'name' => $isVisitor 
+            ? 'Visitante ' . strtoupper(substr((string)$user->id, 0, 4))
+            : ($user->name ?? 'Admin'),
+        'url' => $isVisitor ? ($user->current_url ?? '/') : 'CRM Dashboard'
     ];
 });
