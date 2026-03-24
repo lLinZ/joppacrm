@@ -16,6 +16,7 @@ interface CatalogProduct {
     price: string;
     is_published: boolean;
     views_count: number;
+    unique_views_count: number;
     collections: Collection[];
 }
 
@@ -112,7 +113,7 @@ export default function CatalogProductsIndex({ products }: { products: CatalogPr
                                 <th className="px-6 py-4 font-semibold text-muted-foreground">Producto / Estado</th>
                                 <th className="px-6 py-4 font-semibold text-muted-foreground">Precio Base</th>
                                 <th className="px-6 py-4 font-semibold text-muted-foreground">Colecciones</th>
-                                <th className="px-6 py-4 font-semibold text-muted-foreground">Visualizaciones</th>
+                                <th className="px-6 py-4 font-semibold text-muted-foreground text-center">Impresiones / Únicos</th>
                                 <th className="px-6 py-4 font-semibold text-muted-foreground text-right">Acciones</th>
                             </tr>
                         </thead>
@@ -145,10 +146,15 @@ export default function CatalogProductsIndex({ products }: { products: CatalogPr
                                             )) : <span className="text-muted-foreground text-xs">Ninguna</span>}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="flex items-center gap-1.5 text-foreground font-semibold">
-                                            <Eye className="w-4 h-4 text-muted-foreground" />
-                                            {p.views_count.toLocaleString('en-US')}
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col items-center justify-center text-sm font-medium">
+                                            <div className="flex items-center gap-1.5 text-foreground">
+                                                <Eye className="w-4 h-4 text-muted-foreground" />
+                                                {p.views_count.toLocaleString('en-US')}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground mt-0.5">
+                                                {p.unique_views_count.toLocaleString('en-US')} únicos
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">

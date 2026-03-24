@@ -20,6 +20,7 @@ interface DashboardProps {
         inventory_value: number;
         monthly_expenses: number;
         total_web_views: number;
+        total_unique_views: number;
     };
     low_stock_products: Product[];
 }
@@ -85,6 +86,11 @@ export default function Dashboard({ stats, low_stock_products }: DashboardProps)
                     title="Visualizaciones Web" 
                     value={stats.total_web_views} 
                     icon={Globe} 
+                />
+                <StatCard 
+                    title="Visitantes Únicos" 
+                    value={stats.total_unique_views} 
+                    icon={Users} 
                 />
             </div>
 

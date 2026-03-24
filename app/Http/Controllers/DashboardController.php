@@ -21,6 +21,7 @@ class DashboardController extends Controller
         $lowStockProducts = \App\Models\Product::whereRaw('quantity <= min_stock')->get();
         
         $totalWebViews = \App\Models\CatalogProduct::sum('views_count');
+        $totalUniqueViews = \App\Models\CatalogProduct::sum('unique_views_count');
 
         return inertia('Dashboard', [
             'stats' => [
@@ -29,6 +30,7 @@ class DashboardController extends Controller
                 'inventory_value' => $inventoryCostValue,
                 'monthly_expenses' => $currentMonthExpenses,
                 'total_web_views' => $totalWebViews,
+                'total_unique_views' => $totalUniqueViews,
             ],
             'low_stock_products' => $lowStockProducts
         ]);

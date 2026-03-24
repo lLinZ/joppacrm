@@ -24,6 +24,7 @@ class CatalogProduct extends Model
         'inventory_product_id',
         'catalog_order',
         'views_count',
+        'unique_views_count',
         'sales_count',
     ];
 

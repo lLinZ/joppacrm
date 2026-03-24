@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Collection;
 use App\Models\CatalogProduct;
+use App\Models\CatalogProductView;
 use Illuminate\Http\Request;
 
 class CatalogController extends Controller
@@ -72,12 +73,32 @@ class CatalogController extends Controller
     /**
      * Increment the views count for a product.
      */
-    public function incrementView($identifier)
+    public function incrementView(Request $request, $identifier)
     {
         $product = CatalogProduct::where('slug', $identifier)->orWhere('id', $identifier)->first();
         
         if ($product) {
+            // Raw view tracking
             $product->increment('views_count');
+            
+            // Unique view tracking
+            $visitorId = $request->input('visitor_id');
+            if ($visitorId) {
+                $view = CatalogProductView::firstOrCreate(
+                    [
+                        'catalog_product_id' => $product->id,
+                        'visitor_id' => $visitorId,
+                    ],
+                    [
+                        'ip_address' => $request->ip(),
+                    ]
+                );
+                
+                if ($view->wasRecentlyCreated) {
+                    $product->increment('unique_views_count');
+                }
+            }
+            
             return response()->json(['message' => 'View recorded']);
         }
 
