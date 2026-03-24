@@ -139,33 +139,54 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-muted/30 border-b border-border">
                                 <tr>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/3">Usuario / ID</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">URL Actual</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/4">Usuario / ID</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/4">IP</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/4">Dispositivo</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/4">URL Actual</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {onlineUsers.map((user) => (
-                                    <tr key={user.id} className="hover:bg-muted/20 transition-colors">
-                                        <td className="px-6 py-4 text-foreground font-medium flex items-center gap-3">
-                                            <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 text-xs font-bold uppercase ring-1 ring-emerald-500/20">
-                                                {user.name ? user.name.substring(0, 2) : 'V'}
-                                            </div>
-                                            <span>{user.name || 'Visitante'}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="max-w-[400px] truncate font-medium text-muted-foreground" title={user.url}>
-                                                    {user.url || 'N/A'}
+                                {onlineUsers.map((user) => {
+                                    const parseDevice = (ua: string) => {
+                                        if (!ua) return 'Desconocido';
+                                        if (ua.includes('iPhone')) return '📱 iPhone';
+                                        if (ua.includes('iPad')) return '📱 iPad';
+                                        if (ua.includes('Android')) return '📱 Android';
+                                        if (ua.includes('Mac OS')) return '💻 Mac';
+                                        if (ua.includes('Windows')) return '💻 Windows';
+                                        if (ua.includes('Linux')) return '💻 Linux';
+                                        return '💻 Web';
+                                    };
+
+                                    return (
+                                        <tr key={user.id} className="hover:bg-muted/20 transition-colors">
+                                            <td className="px-6 py-4 text-foreground font-medium flex items-center gap-3">
+                                                <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 text-xs font-bold uppercase ring-1 ring-emerald-500/20">
+                                                    {user.name ? user.name.substring(0, 2) : 'V'}
                                                 </div>
-                                                {user.url && user.url !== '/' && (
-                                                    <a href={user.url} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-500 hover:underline text-xs flex items-center gap-1 font-semibold">
-                                                        <Globe className="h-3 w-3" /> Abrir <span className="sr-only">URL</span>
-                                                    </a>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                                <span>{user.name || 'Visitante'}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-foreground font-mono text-xs">
+                                                {user.ip || '127.0.0.1'}
+                                            </td>
+                                            <td className="px-6 py-4 text-muted-foreground font-medium text-xs max-w-[150px] truncate" title={user.device || 'Desconocido'}>
+                                                {parseDevice(user.device)}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="max-w-[300px] truncate font-medium text-muted-foreground" title={user.url}>
+                                                        {user.url || 'N/A'}
+                                                    </div>
+                                                    {user.url && user.url !== '/' && (
+                                                        <a href={user.url} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-500 hover:underline text-xs flex items-center gap-1 font-semibold">
+                                                            <Globe className="h-3 w-3" /> Abrir <span className="sr-only">URL</span>
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

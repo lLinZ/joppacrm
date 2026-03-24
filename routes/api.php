@@ -34,7 +34,9 @@ Route::post('/broadcasting/auth', function (Request $request) {
     $user = new \Illuminate\Auth\GenericUser([
         'id' => $request->visitor_id, 
         'name' => 'Visitante',
-        'current_url' => $request->url ?? '/'
+        'current_url' => $request->url ?? '/',
+        'ip_address' => $request->ip(),
+        'user_agent' => $request->header('User-Agent')
     ]);
 
     $request->setUserResolver(function () use ($user) {
