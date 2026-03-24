@@ -17,12 +17,22 @@ interface WebTrafficProps {
         avg_duration: number;
     }[];
     recentSessions: {
-        id: number;
-        visitor_id: string;
-        entry_url: string;
-        started_at: string;
-        duration_formatted: string;
-    }[];
+        data: {
+            id: number;
+            visitor_id: string;
+            ip_address: string | null;
+            user_agent: string | null;
+            source: string | null;
+            entry_url: string;
+            started_at: string;
+            duration_formatted: string;
+        }[];
+        links: {
+            url: string | null;
+            label: string;
+            active: boolean;
+        }[];
+    };
 }
 
 export default function WebTraffic({ metrics, chartData, recentSessions }: WebTrafficProps) {
@@ -57,8 +67,31 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
         };
     }, []);
 
+    const [searchQuery, setSearchQuery] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return new URLSearchParams(window.location.search).get('search') || '';
+        }
+        return '';
+    });
+
     const handleFilter = (d: number) => {
-        router.get(route('web.traffic'), { days: d }, { preserveState: true });
+        router.get(route('web.traffic'), { days: d, search: searchQuery }, { preserveState: true });
+    };
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get(route('web.traffic'), { days: metrics.days, search: searchQuery }, { preserveState: true });
+    };
+
+    const parseDevice = (ua: string | null) => {
+        if (!ua) return 'Desconocido';
+        if (ua.includes('iPhone')) return '📱 iPhone';
+        if (ua.includes('iPad')) return '📱 iPad';
+        if (ua.includes('Android')) return '📱 Android';
+        if (ua.includes('Mac OS')) return '💻 Mac';
+        if (ua.includes('Windows')) return '💻 Windows';
+        if (ua.includes('Linux')) return '💻 Linux';
+        return '💻 Web';
     };
 
     return (
@@ -148,16 +181,6 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {onlineUsers.map((user) => {
-                                    const parseDevice = (ua: string) => {
-                                        if (!ua) return 'Desconocido';
-                                        if (ua.includes('iPhone')) return '📱 iPhone';
-                                        if (ua.includes('iPad')) return '📱 iPad';
-                                        if (ua.includes('Android')) return '📱 Android';
-                                        if (ua.includes('Mac OS')) return '💻 Mac';
-                                        if (ua.includes('Windows')) return '💻 Windows';
-                                        if (ua.includes('Linux')) return '💻 Linux';
-                                        return '💻 Web';
-                                    };
 
                                     return (
                                         <tr key={user.id} className="hover:bg-muted/20 transition-colors">
@@ -251,34 +274,61 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
             </div>
 
             {/* Recent Sessions Table */}
-            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-border bg-muted/20">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <Globe className="h-5 w-5 text-primary" /> Conexiones Recientes
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">Últimas 50 sesiones detectadas por el sistema.</p>
+            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden mb-8">
+                <div className="p-6 border-b border-border bg-muted/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Globe className="h-5 w-5 text-primary" /> Conexiones Históricas
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">Registro de todas las sesiones ordenadas por última actividad.</p>
+                    </div>
+                    <form onSubmit={handleSearch} className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            placeholder="Buscar IP, origen o ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="flex-1 md:w-64 px-4 py-2 border border-border rounded-lg bg-background text-sm"
+                        />
+                        <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">
+                            Buscar
+                        </button>
+                    </form>
                 </div>
                 
-                {recentSessions.length === 0 ? (
+                {recentSessions.data.length === 0 ? (
                     <div className="p-6 text-center text-muted-foreground text-sm">
                         No hay sesiones registradas aún. El tráfico aparecerá mágicamente aquí.
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto min-h-[400px]">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-muted/50 border-b border-border">
                                 <tr>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground">ID Anónimo</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Fecha y Hora de Inicio</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Duración en Web</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Última URL Vista</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground">IP / Dispositivo</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Fuente</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Inicio</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Duración</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Última URL</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {recentSessions.map((s) => (
+                                {recentSessions.data.map((s) => (
                                     <tr key={s.id} className="hover:bg-muted/30 transition-colors">
                                         <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
                                             {s.visitor_id}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-foreground font-medium">{s.ip_address || 'Desc.'}</span>
+                                                <span className="text-xs text-muted-foreground">{parseDevice(s.user_agent)}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-emerald-600 font-semibold text-xs whitespace-nowrap">
+                                            <span className="bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                                                {s.source || 'Orgánico / Directo'}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-4 text-foreground font-medium">
                                             {s.started_at}
@@ -286,13 +336,29 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                                         <td className="px-6 py-4 text-primary font-semibold text-sm">
                                             <span className="bg-primary/10 px-2 py-1 rounded-md">{s.duration_formatted}</span>
                                         </td>
-                                        <td className="px-6 py-4 text-muted-foreground truncate max-w-[250px]" title={s.entry_url}>
+                                        <td className="px-6 py-4 text-muted-foreground truncate max-w-[200px]" title={s.entry_url}>
                                             {s.entry_url || 'N/A'}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+                
+                {recentSessions.links && recentSessions.links.length > 3 && (
+                    <div className="p-4 border-t border-border bg-muted/20 flex justify-center">
+                        <div className="flex flex-wrap gap-1">
+                            {recentSessions.links.map((link, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => link.url && router.get(link.url, { search: searchQuery }, { preserveState: true })}
+                                    disabled={!link.url}
+                                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${link.active ? 'bg-primary text-primary-foreground font-medium' : 'bg-background border border-border text-foreground hover:bg-muted'} ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

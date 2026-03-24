@@ -11,17 +11,31 @@ class WebAnalyticsController extends Controller
         $days = (int) $request->get('days', 7);
         $startDate = now()->subDays($days - 1)->startOfDay();
 
-        // Obtener sesiones recientes para la tabla
-        $recentSessions = \App\Models\WebTrafficSession::orderBy('last_active_at', 'desc')
-            ->take(50)
-            ->get()
-            ->map(function ($session) {
+        $search = $request->get('search');
+
+        $query = \App\Models\WebTrafficSession::orderBy('last_active_at', 'desc');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('visitor_id', 'like', "%{$search}%")
+                  ->orWhere('ip_address', 'like', "%{$search}%")
+                  ->orWhere('source', 'like', "%{$search}%")
+                  ->orWhere('entry_url', 'like', "%{$search}%");
+            });
+        }
+
+        $recentSessions = $query->paginate(15)
+            ->withQueryString()
+            ->through(function ($session) {
                 return [
                     'id' => $session->id,
                     'visitor_id' => substr($session->visitor_id, 0, 8) . '...',
+                    'ip_address' => $session->ip_address,
+                    'user_agent' => $session->user_agent,
+                    'source' => $session->source,
                     'entry_url' => $session->entry_url,
                     'started_at' => $session->started_at->format('Y-m-d H:i:s'),
-                    'duration_formatted' => floor(abs($session->duration_seconds) / 60) . 'm ' . (abs($session->duration_seconds) % 60) . 's',
+                    'duration_formatted' => floor(abs((int)$session->duration_seconds) / 60) . 'm ' . (abs((int)$session->duration_seconds) % 60) . 's',
                 ];
             });
 
