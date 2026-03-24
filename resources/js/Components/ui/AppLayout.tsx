@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog, ShoppingBag, Layers, Store, Palette } from 'lucide-react';
+import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog, ShoppingBag, Layers, Store, Palette, Globe } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { ThemeToggle } from '@/Components/ui/ThemeToggle';
 import { Toaster, toast } from 'sonner';
@@ -40,6 +40,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
     const navigation = [
         { name: 'Dashboard', href: route('dashboard'), routeName: 'dashboard', icon: LayoutDashboard },
+        { name: 'Tráfico Web', href: route('web.traffic'), routeName: 'web.traffic', icon: Globe },
         { name: 'Órdenes', href: route('orders.index'), routeName: 'orders.*', icon: ShoppingBag },
         { name: 'Sol. de Diseño', href: route('design-requests.index'), routeName: 'design-requests.*', icon: Palette },
         { name: 'Proveedores', href: route('suppliers.index'), routeName: 'suppliers.*', icon: Users },

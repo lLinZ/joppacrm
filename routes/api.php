@@ -21,3 +21,6 @@ Route::prefix('catalog')->group(function () {
 });
 
 Route::post('/design-requests', [\App\Http\Controllers\Api\DesignRequestController::class, 'store']);
+
+// Web traffic heartbeat tracking
+Route::post('/tracking/heartbeat', [\App\Http\Controllers\Api\TrackingController::class, 'heartbeat']);

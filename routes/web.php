@@ -41,6 +41,8 @@ Route::middleware('auth')->group(function () {
     Route::post('design-requests/{design_request}/comments', [\App\Http\Controllers\DesignRequestController::class, 'storeComment'])->name('design-requests.comments.store');
     Route::resource('design-requests', \App\Http\Controllers\DesignRequestController::class)->only(['index', 'show', 'update']);
     
+    Route::get('/web-traffic', [\App\Http\Controllers\WebAnalyticsController::class, 'index'])->name('web.traffic');
+    
     Route::resource('users', \App\Http\Controllers\UserController::class);
 });
 

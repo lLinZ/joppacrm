@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\WebTrafficSession;
+use Illuminate\Support\Carbon;
+
+class TrackingController extends Controller
+{
+    public function heartbeat(Request $request)
+    {
+        $validated = $request->validate([
+            'visitor_id' => 'required|string|max:255',
+            'url' => 'nullable|string|max:500',
+        ]);
+
+        $visitorId = $validated['visitor_id'];
+        $url = $validated['url'] ?? null;
+        $now = Carbon::now();
+
+        // Buscamos una sesión del visitante que haya tenido actividad en los últimos 30 minutos
+        $session = WebTrafficSession::where('visitor_id', $visitorId)
+            ->where('last_active_at', '>=', $now->copy()->subMinutes(30))
+            ->orderBy('last_active_at', 'desc')
+            ->first();
+
+        if ($session) {
+            // Actualizar sesión existente
+            $session->last_active_at = $now;
+            // Calcular duración en segundos
+            $session->duration_seconds = $session->last_active_at->diffInSeconds($session->started_at);
+            $session->save();
+        } else {
+            // Crear nueva sesión (primera vez o pasaron >30 mins)
+            $session = WebTrafficSession::create([
+                'visitor_id' => $visitorId,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'entry_url' => $url,
+                'started_at' => $now,
+                'last_active_at' => $now,
+                'duration_seconds' => 0,
+            ]);
+        }
+
+        return response()->json(['status' => 'ok']);
+    }
+}
