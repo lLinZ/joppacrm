@@ -3,7 +3,7 @@ import { AppLayout } from '@/Components/ui/AppLayout';
 import { PageHeader } from '@/Components/ui/PageHeader';
 import { StatCard } from '@/Components/ui/StatCard';
 import { DataTable } from '@/Components/ui/DataTable';
-import { Users, ShoppingCart, Package, CreditCard } from 'lucide-react';
+import { Users, ShoppingCart, Package, CreditCard, Globe } from 'lucide-react';
 
 interface Product {
     id: number;
@@ -19,6 +19,7 @@ interface DashboardProps {
         total_suppliers: number;
         inventory_value: number;
         monthly_expenses: number;
+        total_web_views: number;
     };
     low_stock_products: Product[];
 }
@@ -79,6 +80,11 @@ export default function Dashboard({ stats, low_stock_products }: DashboardProps)
                     title="Gastos del Mes" 
                     value={formatCurrency(stats.monthly_expenses)} 
                     icon={CreditCard} 
+                />
+                <StatCard 
+                    title="Visualizaciones Web" 
+                    value={stats.total_web_views} 
+                    icon={Globe} 
                 />
             </div>
 
