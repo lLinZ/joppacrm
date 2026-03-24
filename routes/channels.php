@@ -16,6 +16,7 @@ Broadcast::channel('store', function ($user) {
             : ($user->name ?? 'Admin'),
         'url' => $isVisitor ? ($user->current_url ?? '/') : 'CRM Dashboard',
         'ip' => $isVisitor ? ($user->ip_address ?? 'Desconocida') : request()->ip(),
-        'device' => $isVisitor ? ($user->user_agent ?? 'Desconocido') : request()->header('User-Agent')
+        'device' => $isVisitor ? ($user->user_agent ?? 'Desconocido') : request()->header('User-Agent'),
+        'source' => $isVisitor ? ($user->source ?? 'Orgánico / Directo') : 'N/A'
     ];
 });

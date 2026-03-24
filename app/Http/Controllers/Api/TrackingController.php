@@ -14,10 +14,12 @@ class TrackingController extends Controller
         $validated = $request->validate([
             'visitor_id' => 'required|string|max:255',
             'url' => 'nullable|string|max:500',
+            'source' => 'nullable|string|max:255',
         ]);
 
         $visitorId = $validated['visitor_id'];
         $url = $validated['url'] ?? null;
+        $source = $validated['source'] ?? 'Orgánico / Directo';
         $now = Carbon::now();
 
         // Buscamos una sesión del visitante que haya tenido actividad en los últimos 30 minutos
@@ -45,6 +47,7 @@ class TrackingController extends Controller
                 'visitor_id' => $visitorId,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
+                'source' => $source,
                 'entry_url' => $url,
                 'started_at' => $now,
                 'last_active_at' => $now,

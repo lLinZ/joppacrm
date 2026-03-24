@@ -36,7 +36,8 @@ Route::post('/broadcasting/auth', function (Request $request) {
         'name' => 'Visitante',
         'current_url' => $request->url ?? '/',
         'ip_address' => $request->ip(),
-        'user_agent' => $request->header('User-Agent')
+        'user_agent' => $request->header('User-Agent'),
+        'source' => $request->source ?? 'Orgánico / Directo'
     ]);
 
     $request->setUserResolver(function () use ($user) {

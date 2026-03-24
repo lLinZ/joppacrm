@@ -10,6 +10,7 @@ class WebTrafficSession extends Model
         'visitor_id',
         'ip_address',
         'user_agent',
+        'source',
         'entry_url',
         'started_at',
         'last_active_at',

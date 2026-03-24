@@ -139,10 +139,11 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-muted/30 border-b border-border">
                                 <tr>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/4">Usuario / ID</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/4">IP</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/4">Dispositivo</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/4">URL Actual</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">Usuario / ID</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">IP</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">Dispositivo</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">Fuente / Campaña</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">URL Actual</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -171,6 +172,11 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                                             </td>
                                             <td className="px-6 py-4 text-muted-foreground font-medium text-xs max-w-[150px] truncate" title={user.device || 'Desconocido'}>
                                                 {parseDevice(user.device)}
+                                            </td>
+                                            <td className="px-6 py-4 text-emerald-600 dark:text-emerald-400 font-semibold text-xs whitespace-nowrap">
+                                                <span className="bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 shadow-sm">
+                                                    {user.source || 'Orgánico / Directo'}
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
