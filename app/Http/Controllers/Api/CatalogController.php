@@ -104,4 +104,12 @@ class CatalogController extends Controller
 
         return response()->json(['message' => 'Not found'], 404);
     }
+    public function sitemap()
+    {
+        $products = CatalogProduct::where('is_published', true)
+            ->select('slug', 'updated_at')
+            ->get();
+
+        return response()->json(['products' => $products]);
+    }
 }
