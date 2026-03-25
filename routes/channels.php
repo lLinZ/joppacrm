@@ -17,6 +17,9 @@ Broadcast::channel('store', function ($user) {
         'url' => $isVisitor ? ($user->current_url ?? '/') : 'CRM Dashboard',
         'ip' => $isVisitor ? ($user->ip_address ?? 'Desconocida') : request()->ip(),
         'device' => $isVisitor ? ($user->user_agent ?? 'Desconocido') : request()->header('User-Agent'),
-        'source' => $isVisitor ? ($user->source ?? 'Orgánico / Directo') : 'N/A'
+        'source' => $isVisitor ? ($user->source ?? 'Orgánico / Directo') : 'N/A',
+        'is_returning' => $isVisitor 
+            ? \App\Models\WebTrafficSession::where('visitor_id', (string)$user->id)->count() > 1
+            : false
     ];
 });

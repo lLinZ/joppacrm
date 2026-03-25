@@ -43,6 +43,9 @@ class WebAnalyticsController extends Controller
                     'entry_url' => $session->entry_url,
                     'started_at' => $session->started_at->format('Y-m-d H:i:s'),
                     'duration_formatted' => floor(abs((int)$session->duration_seconds) / 60) . 'm ' . (abs((int)$session->duration_seconds) % 60) . 's',
+                    'is_returning' => \App\Models\WebTrafficSession::where('visitor_id', $session->getRawOriginal('visitor_id'))
+                        ->where('started_at', '<', $session->started_at)
+                        ->exists(),
                 ];
             });
 

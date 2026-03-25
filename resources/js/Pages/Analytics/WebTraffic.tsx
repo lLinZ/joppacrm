@@ -26,6 +26,7 @@ interface WebTrafficProps {
             entry_url: string;
             started_at: string;
             duration_formatted: string;
+            is_returning?: boolean;
         }[];
         links: {
             url: string | null;
@@ -193,8 +194,9 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-muted/30 border-b border-border">
                                 <tr>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">Usuario / ID</th>
-                                    <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">IP</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground">Usuario / ID</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground text-center">Tipo</th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground">IP</th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">Dispositivo</th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">Fuente / Campaña</th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground w-1/5">URL Actual</th>
@@ -210,6 +212,13 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                                                     {user.name ? user.name.substring(0, 2) : 'V'}
                                                 </div>
                                                 <span>{user.name || 'Visitante'}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {user.is_returning ? (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">Recurrente</span>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Nuevo</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-foreground font-mono text-xs">
                                                 {user.ip || '127.0.0.1'}
@@ -327,6 +336,7 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                             <thead className="bg-muted/50 border-b border-border">
                                 <tr>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('id')}># ID <SortIcon field="id" /></th>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground text-center">Tipo</th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('visitor_id')}>ID Anónimo <SortIcon field="visitor_id" /></th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('ip_address')}>IP / Dispositivo <SortIcon field="ip_address" /></th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('source')}>Fuente <SortIcon field="source" /></th>
@@ -340,6 +350,13 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                                     <tr key={s.id} className="hover:bg-muted/30 transition-colors">
                                         <td className="px-6 py-4 font-medium text-slate-300 opacity-80">
                                             #{s.id}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            {s.is_returning ? (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-500/20 text-indigo-400 border border-indigo-500/30" title="Visitante Recurrente">Recurrente</span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" title="Primera Visita">Nuevo</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
                                             {s.visitor_id}
