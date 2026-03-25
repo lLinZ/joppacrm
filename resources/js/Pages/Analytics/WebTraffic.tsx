@@ -326,6 +326,7 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-muted/50 border-b border-border">
                                 <tr>
+                                    <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('id')}># ID <SortIcon field="id" /></th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('visitor_id')}>ID Anónimo <SortIcon field="visitor_id" /></th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('ip_address')}>IP / Dispositivo <SortIcon field="ip_address" /></th>
                                     <th className="px-6 py-4 font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort('source')}>Fuente <SortIcon field="source" /></th>
@@ -337,6 +338,9 @@ export default function WebTraffic({ metrics, chartData, recentSessions }: WebTr
                             <tbody className="divide-y divide-border">
                                 {recentSessions.data.map((s) => (
                                     <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-slate-300 opacity-80">
+                                            #{s.id}
+                                        </td>
                                         <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
                                             {s.visitor_id}
                                         </td>
