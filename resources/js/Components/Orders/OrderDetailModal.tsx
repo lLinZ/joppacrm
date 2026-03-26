@@ -171,9 +171,15 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
                                     <p className="font-medium text-foreground">{fullOrder.phone || '-'}</p>
                                 </div>
                                 <div className="col-span-2">
-                                    <span className="text-muted-foreground block mb-1">Dirección</span>
+                                    <span className="text-muted-foreground block mb-1">Dirección / Estado</span>
                                     <p className="font-medium text-foreground">{fullOrder.address || '-'}</p>
                                 </div>
+                                {fullOrder.notes && (
+                                    <div className="col-span-2">
+                                        <span className="text-muted-foreground block mb-1">Instrucciones de Entrega</span>
+                                        <p className="font-medium text-foreground whitespace-pre-wrap bg-muted/30 rounded-lg px-3 py-2 text-sm">{fullOrder.notes}</p>
+                                    </div>
+                                )}
                             </div>
                         </section>
 

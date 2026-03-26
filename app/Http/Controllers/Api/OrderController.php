@@ -22,6 +22,7 @@ class OrderController extends Controller
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'notes'   => 'nullable|string',
             'total_amount' => 'required|numeric',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'nullable|string',
@@ -85,6 +86,7 @@ class OrderController extends Controller
             'email' => $validated['email'],
             'phone' => $validated['phone'],
             'address' => $validated['address'],
+            'notes' => $validated['notes'] ?? null,
             'total_amount' => $validated['total_amount'],
             'status' => 'pending',
         ]);
