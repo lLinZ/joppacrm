@@ -163,8 +163,21 @@ export default function OrdersIndex({ orders, users }: any) {
                                                         <td className="px-4 py-3 font-medium">
                                                             ${Number(order.total_amount).toLocaleString('es-AR')}
                                                         </td>
-                                                        <td className="px-4 py-3 text-muted-foreground">
-                                                            {order.items?.length || 0} items
+                                                        <td className="px-4 py-3 text-muted-foreground max-w-[220px]">
+                                                            {order.items?.length ? (
+                                                                <ul className="space-y-0.5">
+                                                                    {order.items.map((item: any) => (
+                                                                        <li key={item.id} className="text-xs truncate">
+                                                                            <span className="text-foreground font-medium">{item.product_name}</span>
+                                                                            {item.size && <span className="ml-1 text-muted-foreground">· Talla: <span className="font-semibold text-foreground">{item.size}</span></span>}
+                                                                            {item.color && <span className="ml-1 text-muted-foreground">· {item.color}</span>}
+                                                                            <span className="ml-1 text-muted-foreground">× {item.quantity}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            ) : (
+                                                                <span className="italic text-xs">Sin items</span>
+                                                            )}
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             {order.assigned_user ? (
