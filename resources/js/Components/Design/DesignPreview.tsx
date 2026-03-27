@@ -49,7 +49,7 @@ const HoodieSVG = ({ color }: { color: string }) => (
     </svg>
 );
 
-const ColoredMaskCanvas = ({ src, color, className }: { src: string, color: string, className?: string }) => {
+const CompositeGarmentCanvas = ({ src, color, className }: { src: string, color: string, className?: string }) => {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
     React.useEffect(() => {
@@ -65,17 +65,35 @@ const ColoredMaskCanvas = ({ src, color, className }: { src: string, color: stri
             canvas.width = img.width;
             canvas.height = img.height;
             
-            // Draw original image
+            // LAYER 1: Draw original base image
+            ctx.globalCompositeOperation = 'source-over';
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0);
 
-            // Fill with color exactly where image is not transparent
-            ctx.globalCompositeOperation = 'source-in';
-            ctx.fillStyle = color;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // LAYER 2: Fill color mask with multiply + opacity
+            if (color && color.toUpperCase() !== '#FFFFFF') {
+                const offscreenColor = document.createElement('canvas');
+                offscreenColor.width = canvas.width;
+                offscreenColor.height = canvas.height;
+                const offCtx = offscreenColor.getContext('2d');
+                if (offCtx) {
+                    offCtx.drawImage(img, 0, 0);
+                    offCtx.globalCompositeOperation = 'source-in';
+                    offCtx.fillStyle = color;
+                    offCtx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.globalCompositeOperation = 'multiply';
+                    ctx.globalAlpha = 0.85;
+                    ctx.drawImage(offscreenColor, 0, 0);
+                    ctx.globalAlpha = 1.0;
+                }
+            }
 
-            // Reset
-            ctx.globalCompositeOperation = 'source-over';
+            // LAYER 3: Texture/Shadows
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.filter = 'brightness(1.05) contrast(1.05)';
+            ctx.drawImage(img, 0, 0);
+            ctx.filter = 'none'; // reset
         };
         img.src = src;
     }, [src, color]);
@@ -176,28 +194,11 @@ export const DesignPreview = React.forwardRef<HTMLDivElement, DesignPreviewProps
 
                 
                 {!hideMockup && (
-                    <>
-                        {/* LAYER 1: BASE IMAGE */}
-                        <img 
-                            src={assetUrl} 
-                            className="absolute inset-0 w-full h-full object-contain pointer-events-none" 
-                            alt="Base" 
-                        />
-
-                        {/* LAYER 2: COLOR MASK (Canvas ensures html2canvas picks it up) */}
-                        <ColoredMaskCanvas 
-                            src={assetUrl} 
-                            color={color} 
-                            className="absolute inset-0 w-full h-full object-contain pointer-events-none mix-blend-multiply opacity-85" 
-                        />
-
-                        {/* LAYER 3: TEXTURE / SHADOWS */}
-                        <img 
-                            src={assetUrl} 
-                            className="absolute inset-0 w-full h-full object-contain pointer-events-none mix-blend-multiply brightness-[1.05] contrast-[1.05]" 
-                            alt="Texture" 
-                        />
-                    </>
+                    <CompositeGarmentCanvas 
+                        src={assetUrl} 
+                        color={color} 
+                        className="absolute inset-0 w-full h-full object-contain pointer-events-none" 
+                    />
                 )}
 
                 {/* 
@@ -254,7 +255,7 @@ export const DesignPreview = React.forwardRef<HTMLDivElement, DesignPreviewProps
                                 }}
                             >
                                 {el.type === 'image' ? (
-                                    <img src={el.content} className="w-full h-full object-contain" alt="" crossOrigin="anonymous" />
+                                    <img src={el.content} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} alt="" crossOrigin="anonymous" />
                                 ) : (
                                     <div style={{ 
                                         color: el.color, 
