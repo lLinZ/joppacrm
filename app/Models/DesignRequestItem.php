@@ -11,6 +11,10 @@ class DesignRequestItem extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'design_data' => 'array',
+    ];
+
     public function request()
     {
         return $this->belongsTo(DesignRequest::class, 'design_request_id');

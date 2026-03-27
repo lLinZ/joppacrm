@@ -21,6 +21,7 @@ Route::prefix('catalog')->group(function () {
 });
 
 Route::post('/design-requests', [\App\Http\Controllers\Api\DesignRequestController::class, 'store']);
+Route::post('/design-assets', [\App\Http\Controllers\Api\DesignRequestController::class, 'uploadAsset']);
 Route::post('/contact-messages', [\App\Http\Controllers\Api\ContactMessageController::class, 'store']);
 
 // Web traffic heartbeat tracking

@@ -3,13 +3,17 @@
 // Funcionalidad: Visualización exhaustiva de Items dinámicos, imágenes de referencia, notas administrativas e integración de órdenes.
 // </ai_context>
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/Components/ui/card";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
-import { ArrowLeft, Check, Eye, Download, X, Save, ShoppingCart, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Check, Eye, Download, X, Save, ShoppingCart, RefreshCw, Shirt, FileText, Image as ImageIcon, Layers } from 'lucide-react';
+import { DesignPreview } from '@/Components/Design/DesignPreview';
+import { DesignSpecsTable } from '@/Components/Design/DesignSpecsTable';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/Components/ui/dialog";
+import html2canvas from 'html2canvas';
 
 interface DesignItem {
     id: number;
@@ -19,6 +23,9 @@ interface DesignItem {
     size: string;
     quantity: number;
     image_path: string | null;
+    image_back_path?: string | null;
+    placement?: string;
+    design_data?: any;
 }
 
 interface DesignRequestComment {
@@ -55,6 +62,50 @@ interface Props {
 
 export default function Show({ request, catalogProducts }: Props) {
     const [showOrderModal, setShowOrderModal] = useState(false);
+    const [previewItem, setPreviewItem] = useState<DesignItem | null>(null);
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportHideMockup, setExportHideMockup] = useState(true);
+
+    const frontRef = useRef<HTMLDivElement>(null);
+    const backRef = useRef<HTMLDivElement>(null);
+
+    const handleExport = async (ref: React.RefObject<HTMLDivElement>, viewName: string) => {
+        if (!ref.current) return;
+        
+        setIsExporting(true);
+        // Pequena pausa para asegurar que el DOM se actualice (quitar guías, etc)
+        // y asegurar que las tipografías estén listas para evitar que html2canvas haga fallback y estire las letras
+        await document.fonts?.ready;
+        await new Promise(r => setTimeout(r, 150));
+
+        try {
+            const canvas = await html2canvas(ref.current, {
+                scale: 4, // Alta resolución
+                backgroundColor: null, // Transparente si el fondo es null
+                useCORS: true,
+                logging: false,
+                onclone: (document) => {
+                    // Forzar carga de fuentes localmente en el clon si es necesario
+                    Array.from(document.styleSheets).forEach(sheet => {
+                        try {
+                            const cssRules = sheet.cssRules;
+                        } catch (e) {
+                            console.log("CORS issue with stylesheet rules");
+                        }
+                    });
+                }
+            });
+
+            const link = document.createElement('a');
+            link.download = `Joppa_Diseno_${request.id}_${viewName}_${exportHideMockup ? 'Solo_Elementos' : 'Mockup'}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (err) {
+            console.error("Error exportando diseño:", err);
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     const { data: commentData, setData: setCommentData, post: postComment, processing: addingComment, reset: resetComment } = useForm({
         body: '',
@@ -361,76 +412,317 @@ export default function Show({ request, catalogProducts }: Props) {
                                 Piezas Solicitadas
                             </h3>
 
-                            <div className="space-y-4">
+                             <div className="space-y-6">
                                 {request.items.map((item, idx) => (
-                                    <Card key={item.id} className="bg-white/5 border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden hover:border-white/20 transition-all">
-                                        <div className="flex flex-col sm:flex-row h-full">
-                                            {/* Area de Imagen adjunta */}
-                                            <div className="w-full sm:w-64 h-64 sm:h-auto bg-black/40 border-b sm:border-b-0 sm:border-r border-white/10 flex items-center justify-center p-4 relative group">
-                                                {item.image_path ? (
-                                                    <div className="w-full h-full relative">
-                                                        <img
-                                                            src={item.image_path}
-                                                            alt={`Diseño ${idx + 1}`}
-                                                            className="w-full h-full object-contain drop-shadow-2xl"
-                                                        />
-                                                        <a
-                                                            href={item.image_path}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
-                                                        >
-                                                            <Download className="w-8 h-8 mb-2" />
-                                                            <span className="font-semibold text-sm">Ver Original</span>
-                                                        </a>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-slate-600 flex flex-col items-center justify-center">
-                                                        <Eye className="w-8 h-8 mb-2 opacity-50" />
-                                                        <p className="text-xs uppercase font-semibold">Sin imagen física</p>
-                                                    </div>
-                                                )}
-                                                <div className="absolute top-4 left-4">
-                                                    <Badge className="bg-emerald-500 text-white font-bold px-3 py-1 shadow-lg">Prenda #{idx + 1}</Badge>
-                                                </div>
-                                            </div>
+                                    <div key={item.id} className="space-y-4">
+                                        <Card className="bg-white/5 border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden hover:border-white/20 transition-all">
+                                            <div className="flex flex-col sm:flex-row h-full">
+                                                {/* Design Visualization Area */}
+                                                <div className="w-full sm:w-1/2 bg-black/40 border-b sm:border-b-0 sm:border-r border-white/10 p-4">
+                                                     {(() => {
+                                                         let designObj = item.design_data;
+                                                         if (typeof designObj === 'string') {
+                                                             try {
+                                                                 designObj = JSON.parse(designObj);
+                                                             } catch (e) {
+                                                                 console.error("Parse error", e);
+                                                             }
+                                                         }
+                                                         
+                                                         const hasBack = designObj?.elements?.back && designObj.elements.back.length > 0;
 
-                                            {/* Detalles técnicos */}
-                                            <div className="flex-1 p-6 flex flex-col justify-center">
-                                                <div className="grid grid-cols-2 gap-y-6 gap-x-8">
-                                                    <div>
-                                                        <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Estilo de Prenda</p>
-                                                        <p className="text-white font-medium text-lg">{item.style}</p>
+                                                          // Extract unique images for download
+                                                          const allDesignElements = [
+                                                              ...(designObj?.elements?.front || []),
+                                                              ...(designObj?.elements?.back || [])
+                                                          ];
+                                                          const designImages = Array.from(new Set(
+                                                              allDesignElements
+                                                                  .filter(el => el.type === 'image')
+                                                                  .map(el => el.content)
+                                                          ));
+
+                                                         return designObj ? (
+                                                             <div className="space-y-4">
+                                                                 <div className="relative group cursor-zoom-in" onClick={() => setPreviewItem(item)}>
+                                                                     <DesignPreview design={designObj} view="front" />
+                                                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                                                                         <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 flex items-center gap-2 text-white font-bold text-sm shadow-xl">
+                                                                             <Eye size={16} /> Ver en Grande
+                                                                         </div>
+                                                                     </div>
+                                                                 </div>
+                                                                 
+                                                                 {hasBack && (
+                                                                     <div className="relative group cursor-zoom-in mt-4" onClick={() => setPreviewItem(item)}>
+                                                                         <DesignPreview design={designObj} view="back" />
+                                                                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                                                                             <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 flex items-center gap-2 text-white font-bold text-sm shadow-xl">
+                                                                                 <Eye size={16} /> Ver en Grande
+                                                                             </div>
+                                                                         </div>
+                                                                     </div>
+                                                                 )}
+
+                                                                  {/* Download Section for Design Assets */}
+                                                                  {designImages.length > 0 && (
+                                                                      <div className="mt-6 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                                                                          <h4 className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2">
+                                                                              <Download size={14} /> Recursos del Diseño
+                                                                          </h4>
+                                                                          <div className="grid grid-cols-1 gap-2">
+                                                                              {designImages.map((imgUrl, i) => (
+                                                                                  <a 
+                                                                                      key={i}
+                                                                                      href={imgUrl} 
+                                                                                      download 
+                                                                                      target="_blank"
+                                                                                      className="flex items-center justify-between p-2 bg-white/5 hover:bg-white/10 rounded-lg group transition-colors border border-white/5"
+                                                                                  >
+                                                                                      <div className="flex items-center gap-3 overflow-hidden">
+                                                                                          <img src={imgUrl} className="w-8 h-8 rounded object-cover border border-white/10 bg-black" />
+                                                                                          <span className="text-[10px] text-slate-300 truncate font-mono">Original_{i+1}.png</span>
+                                                                                      </div>
+                                                                                      <Download size={14} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+                                                                                  </a>
+                                                                              ))}
+                                                                          </div>
+                                                                      </div>
+                                                                  )}
+                                                             </div>
+                                                         ) : item.image_path ? (
+                                                             <div className="w-full h-full relative group min-h-[300px]">
+                                                                 <img
+                                                                     src={item.image_path}
+                                                                     alt={`Diseño ${idx + 1}`}
+                                                                     className="w-full h-full object-contain drop-shadow-2xl"
+                                                                 />
+                                                                 <a
+                                                                     href={item.image_path}
+                                                                     target="_blank"
+                                                                     rel="noopener noreferrer"
+                                                                     className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                                                                 >
+                                                                     <Download className="w-8 h-8 mb-2" />
+                                                                     <span className="font-semibold text-sm">Ver Original</span>
+                                                                 </a>
+                                                             </div>
+                                                         ) : (
+                                                             <div className="text-slate-600 flex flex-col items-center justify-center min-h-[300px]">
+                                                                 <Eye className="w-8 h-8 mb-2 opacity-50" />
+                                                                 <p className="text-xs uppercase font-semibold text-center px-4">Este item no tiene un diseño interactivo ni imagen física adjunta.</p>
+                                                             </div>
+                                                         );
+                                                     })()}
+                                                     
+                                                     <div className="mt-4 flex flex-wrap gap-2">
+                                                        <Badge className="bg-emerald-500 text-white font-bold px-3 py-1 shadow-lg">Pieza #{idx + 1}</Badge>
+                                                        {item.placement && (
+                                                            <Badge variant="outline" className="border-emerald-500/50 text-emerald-400 font-bold px-3 py-1 uppercase tracking-wider">
+                                                                {item.placement === 'doble' ? 'Doble Faz' : item.placement === 'trasero' ? 'Espalda' : item.placement === 'pocket' ? 'Bolsillo' : 'Frontal'}
+                                                            </Badge>
+                                                        )}
                                                     </div>
-                                                    <div>
-                                                        <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Género</p>
-                                                        <p className="text-slate-300">{item.gender}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Color Especificado</p>
-                                                        <p className="text-slate-300 flex items-center gap-2">
-                                                            <span className="w-3 h-3 rounded-full bg-slate-400 inline-block"></span>
-                                                            {item.color}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex items-center gap-8">
+                                                </div>
+
+                                                {/* Detalles técnicos */}
+                                                <div className="flex-1 p-6 flex flex-col justify-center">
+                                                    <div className="grid grid-cols-2 gap-y-6 gap-x-8">
                                                         <div>
-                                                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Talla</p>
-                                                            <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-lg border border-white/20 bg-white/5 font-mono font-bold text-white shadow-inner">
-                                                                {item.size}
-                                                            </span>
+                                                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Modelo de Prenda</p>
+                                                            <p className="text-white font-bold text-lg leading-tight">{item.style}</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Cantidad exigida</p>
-                                                            <p className="text-white text-2xl font-light">x{item.quantity}</p>
+                                                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Categoría/Género</p>
+                                                            <p className="text-slate-200">{item.gender}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Color de Tela</p>
+                                                            <p className="text-slate-200 flex items-center gap-2 font-medium">
+                                                                <span className="w-3 h-3 rounded-full border border-white/20 inline-block" style={{ backgroundColor: item.color === 'Negro' ? '#1A1A1A' : item.color === 'Blanco' ? '#FFFFFF' : item.color }}></span>
+                                                                {item.color}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-8">
+                                                            <div>
+                                                                <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Talla</p>
+                                                                <span className="inline-flex items-center justify-center min-w-[36px] h-9 rounded-lg border border-white/20 bg-white/5 font-mono font-bold text-white shadow-inner">
+                                                                    {item.size}
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Cantidad</p>
+                                                                <p className="text-white text-3xl font-light tracking-tighter">x{item.quantity}</p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </Card>
+                                        </Card>
+                                        
+                                        {/* TABLE OF SPECS FOR THIS SPECIFIC ITEM */}
+                                        {item.design_data && (
+                                            <DesignSpecsTable design={item.design_data} />
+                                        )}
+                                    </div>
                                 ))}
                             </div>
+
+                            {/* LARGE PREVIEW DIALOG */}
+                            <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
+                                <DialogContent className="w-[95vw] !max-w-[95vw] h-[90vh] bg-zinc-950 border-white/10 p-0 overflow-hidden flex flex-col">
+                                     <DialogHeader className="p-4 border-b border-white/5 bg-zinc-900/50 flex-shrink-0">
+                                         <DialogTitle className="text-white flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <Shirt className="text-emerald-400" /> 
+                                                <span>Inspección de Producción - {previewItem?.style}</span>
+                                            </div>
+                                            <div className="flex items-center gap-4 mr-8">
+                                                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                                                    <span className="text-[10px] text-zinc-400 font-bold uppercase">Exportar:</span>
+                                                    <Button 
+                                                        size="xs" 
+                                                        variant={exportHideMockup ? "default" : "outline"}
+                                                        onClick={() => setExportHideMockup(true)}
+                                                        className="h-7 text-[10px]"
+                                                    >
+                                                        Solo Diseño
+                                                    </Button>
+                                                    <Button 
+                                                        size="xs" 
+                                                        variant={!exportHideMockup ? "default" : "outline"}
+                                                        onClick={() => setExportHideMockup(false)}
+                                                        className="h-7 text-[10px]"
+                                                    >
+                                                        Con Prenda
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                         </DialogTitle>
+                                     </DialogHeader>
+
+                                     <div className="flex-1 flex overflow-hidden">
+                                         {/* Workspace Area */}
+                                         <div className="flex-[3] min-w-0 overflow-y-auto p-8 flex flex-col gap-12 bg-black/20">
+                                             {(() => {
+                                                 let designObj = previewItem?.design_data;
+                                                 if (typeof designObj === 'string') {
+                                                     try {
+                                                         designObj = JSON.parse(designObj);
+                                                     } catch (e) {
+                                                         console.error("Parse error", e);
+                                                     }
+                                                 }
+                                                 
+                                                 const hasBack = designObj?.elements?.back && designObj.elements.back.length > 0;
+
+                                                 return (
+                                                     <div className="w-full space-y-12">
+                                                         <div className="space-y-4">
+                                                             <div className="flex items-center justify-between">
+                                                                <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-2">
+                                                                    <Layers size={12} /> Vista Frontal
+                                                                </p>
+                                                                <Button 
+                                                                    onClick={() => handleExport(frontRef, 'Frontal')}
+                                                                    disabled={isExporting}
+                                                                    size="sm"
+                                                                    className="bg-emerald-500 hover:bg-emerald-600 text-white gap-2"
+                                                                >
+                                                                    {isExporting ? <RefreshCw className="animate-spin" size={14} /> : <Download size={14} />}
+                                                                    Descargar PNG Alta Res
+                                                                </Button>
+                                                             </div>
+                                                             <div className="flex justify-center">
+                                                                <div className="w-full max-w-[800px]">
+                                                                    <DesignPreview 
+                                                                        ref={frontRef} 
+                                                                        design={designObj} 
+                                                                        view="front" 
+                                                                        hideMockup={exportHideMockup}
+                                                                        isExporting={isExporting}
+                                                                    />
+                                                                </div>
+                                                             </div>
+                                                         </div>
+
+                                                         {hasBack && (
+                                                            <div className="space-y-4 border-t border-white/5 pt-12">
+                                                                <div className="flex items-center justify-between">
+                                                                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-2">
+                                                                        <Layers size={12} /> Vista Trasera
+                                                                    </p>
+                                                                    <Button 
+                                                                        onClick={() => handleExport(backRef, 'Trasera')}
+                                                                        disabled={isExporting}
+                                                                        size="sm"
+                                                                        className="bg-emerald-500 hover:bg-emerald-600 text-white gap-2"
+                                                                    >
+                                                                        {isExporting ? <RefreshCw className="animate-spin" size={14} /> : <Download size={14} />}
+                                                                        Descargar PNG Alta Res
+                                                                    </Button>
+                                                                </div>
+                                                                <div className="flex justify-center">
+                                                                    <div className="w-full max-w-[800px]">
+                                                                        <DesignPreview 
+                                                                            ref={backRef} 
+                                                                            design={designObj} 
+                                                                            view="back" 
+                                                                            hideMockup={exportHideMockup}
+                                                                            isExporting={isExporting}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                         )}
+                                                     </div>
+                                                 );
+                                             })()}
+                                         </div>
+
+                                         {/* Technical Info Sidebar */}
+                                         <div className="w-80 bg-zinc-900/50 border-l border-white/5 p-6 overflow-y-auto hidden lg:block">
+                                             <div className="space-y-8">
+                                                 <div>
+                                                     <h4 className="text-white font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                                         <FileText className="text-emerald-400" size={16} /> Ficha Técnica
+                                                     </h4>
+                                                     <div className="space-y-4">
+                                                         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                                                             <p className="text-[10px] text-zinc-500 uppercase font-bold mb-2">Prenda Base</p>
+                                                             <p className="text-white text-sm font-semibold">{previewItem?.style}</p>
+                                                             <p className="text-zinc-400 text-xs">{previewItem?.gender}</p>
+                                                         </div>
+                                                         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                                                             <p className="text-[10px] text-zinc-500 uppercase font-bold mb-2">Color de Tela</p>
+                                                             <div className="flex items-center gap-3">
+                                                                 <div className="w-6 h-6 rounded-full border border-white/20" style={{ backgroundColor: previewItem?.color }} />
+                                                                 <p className="text-white text-sm font-medium">{previewItem?.color}</p>
+                                                             </div>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+
+                                                 <div>
+                                                     <h4 className="text-white font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                                         <ImageIcon className="text-emerald-400" size={16} /> Tipografías y Colores
+                                                     </h4>
+                                                     <div className="space-y-1">
+                                                        <DesignSpecsTable design={previewItem?.design_data} />
+                                                     </div>
+                                                 </div>
+
+                                                 <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                                                     <p className="text-[10px] text-emerald-400 font-bold uppercase mb-2">Pro-Tip</p>
+                                                     <p className="text-zinc-300 text-xs leading-relaxed">
+                                                         Usa la opción <b>"Solo Diseño"</b> para exportar en alta resolución sin el fondo de la prenda. Esto facilita la vectorización y separación de colores.
+                                                     </p>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     </div>
                 </div>

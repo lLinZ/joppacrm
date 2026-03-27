@@ -26,6 +26,7 @@ class DesignRequestController extends Controller
             'items.*.placement'     => 'nullable|string|in:frontal,trasero,doble,pocket',
             'items.*.image'         => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
             'items.*.image_back'    => 'nullable|file|mimes:jpeg,png,jpg,webp,pdf|max:5120',
+            'items.*.design_data'   => 'nullable|string',
         ]);
 
         $designRequest = DesignRequest::create([
@@ -61,6 +62,7 @@ class DesignRequestController extends Controller
                 'placement'       => $itemData['placement'] ?? 'frontal',
                 'image_path'      => $imagePath      ? '/storage/' . $imagePath      : null,
                 'image_back_path' => $imageBackPath  ? '/storage/' . $imageBackPath  : null,
+                'design_data'     => $itemData['design_data'] ?? null,
             ]);
         }
 
@@ -68,5 +70,23 @@ class DesignRequestController extends Controller
             'message'        => 'Solicitud recibida exitosamente.',
             'design_request' => $designRequest->load('items')
         ], 201);
+    }
+
+    public function uploadAsset(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $path = $file->store('design_assets', 'public');
+            
+            return response()->json([
+                'url' => url('/storage/' . $path)
+            ]);
+        }
+
+        return response()->json(['error' => 'No file uploaded'], 400);
     }
 }
