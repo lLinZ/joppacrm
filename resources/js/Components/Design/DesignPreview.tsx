@@ -150,9 +150,15 @@ export const DesignPreview = React.forwardRef<HTMLDivElement, DesignPreviewProps
     const isBack = view === 'back';
 
     // Same assets as DesignStudio
-    const assetUrl = isBack 
+    let assetUrl = isBack 
         ? '/images/custom_design_builder/franela_blanca_sin_fondo_back.png'
         : '/images/custom_design_builder/franela_blanca_sin_fondo.png';
+
+    if (designObj?.product?.id === 'hoodie') {
+        assetUrl = isBack 
+            ? '/images/custom_design_builder/hoodie_sin_fondo_back.png'
+            : '/images/custom_design_builder/hoodie_sin_fondo_front.png';
+    }
 
     return (
         <div 
