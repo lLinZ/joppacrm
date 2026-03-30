@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Paper, Text, Stack, ActionIcon, Button, Tabs, ColorInput, Select, Slider, FileInput, Transition, Group, Card, SimpleGrid, rem, Tooltip, Title, FileButton } from '@mantine/core';
+import { Box, Paper, Text, Stack, ActionIcon, Button, Tabs, ColorInput, Select, Slider, FileInput, Transition, Group, Card, SimpleGrid, rem, Tooltip, Title, FileButton, Divider } from '@mantine/core';
 import {
     IconShirt, IconTextSize, IconUpload, IconTrash, IconRotate,
     IconMaximize, IconDeviceFloppy, IconChevronRight, IconChevronLeft,
