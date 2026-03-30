@@ -445,7 +445,34 @@ export const DesignStudio: React.FC<DesignStudioProps> = ({ gender, design_data,
                         <Tabs.Panel value="product">
                             <Stack gap="lg">
                                 <Select label="PRENDA" data={PRODUCTS.map(p => ({ label: p.name, value: p.id }))} value={product.id} onChange={(v) => setProduct(PRODUCTS.find(p => p.id === v) || PRODUCTS[0])} />
-                                <Box><Text size="xs" fw={700} mb={8}>COLOR</Text><Group gap="xs">{GARMENT_COLORS.map(c => (<ActionIcon key={c.value} radius="xl" size={32} onClick={() => setColor(c.value)} style={{ backgroundColor: c.value, border: color === c.value ? '2px solid #0B3022' : '1px solid #eee' }} />))}</Group></Box>
+                                <Box>
+                                    <Text size="xs" fw={700} mb={8}>COLOR DE PRENDA</Text>
+                                    <Group gap="xs" mb="md">
+                                        {GARMENT_COLORS.map(c => (
+                                            <Tooltip label={c.label} key={c.value}>
+                                                <ActionIcon 
+                                                    radius="xl" 
+                                                    size={32} 
+                                                    onClick={() => setColor(c.value)} 
+                                                    style={{ 
+                                                        backgroundColor: c.value, 
+                                                        border: color.toUpperCase() === c.value.toUpperCase() ? '2px solid #0B3022' : '1px solid #eee',
+                                                        boxShadow: color.toUpperCase() === c.value.toUpperCase() ? '0 0 0 2px #fff, 0 0 0 4px #0B3022' : 'none'
+                                                    }} 
+                                                />
+                                            </Tooltip>
+                                        ))}
+                                    </Group>
+                                    <Divider label="O Color Personalizado" labelPosition="center" mb="sm" />
+                                    <ColorInput 
+                                        value={color} 
+                                        onChange={setColor} 
+                                        placeholder="#000000" 
+                                        radius="md"
+                                        size="sm"
+                                        styles={{ input: { fontFamily: 'Montserrat, sans-serif', fontWeight: 600 } }}
+                                    />
+                                </Box>
                             </Stack>
                         </Tabs.Panel>
                         <Tabs.Panel value="text">
