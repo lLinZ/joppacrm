@@ -70,6 +70,17 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
     collections: Collection[];
     inventoryProducts: InventoryProduct[];
 }) {
+    // Helper function for safe JSON parsing
+    const safeJsonParse = (str: any) => {
+        if (!str || typeof str !== 'string') return str;
+        try {
+            return JSON.parse(str);
+        } catch (e) {
+            console.error("Invalid JSON in product_design, using null:", str);
+            return null;
+        }
+    };
+
     const [form, setForm] = useState({
         name: product.name || '',
         slug: product.slug || '',
@@ -509,7 +520,7 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
                             </button>
                             <DesignStudio 
                                 gender="Caballero" 
-                                initialData={form.product_design ? (typeof form.product_design === 'string' ? JSON.parse(form.product_design) : form.product_design) : null}
+                                initialData={safeJsonParse(form.product_design)}
                                 onSave={(data) => {
                                     setForm(prev => ({ ...prev, product_design: JSON.stringify(data) }));
                                 }} 
