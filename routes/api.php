@@ -18,6 +18,10 @@ Route::prefix('catalog')->group(function () {
     Route::get('/{product}', [CatalogController::class, 'show']);
     Route::post('/{id}/view', [CatalogController::class, 'incrementView']);
     Route::get('/sitemap-data', [CatalogController::class, 'sitemap']);
+    
+    // Reviews
+    Route::get('/{product}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'index']);
+    Route::post('/{product}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'store']);
 });
 
 Route::post('/design-requests', [\App\Http\Controllers\Api\DesignRequestController::class, 'store']);

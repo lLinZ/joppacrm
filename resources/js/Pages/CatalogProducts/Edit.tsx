@@ -2,7 +2,25 @@ import { useState } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { Button } from '@/Components/ui/button';
-import { Save, ArrowLeft, Image as ImageIcon, X, Trash2, Plus, Check, Globe, Link as LinkIcon, Video } from 'lucide-react';
+import { 
+    Save, 
+    ArrowLeft, 
+    Image as ImageIcon, 
+    X, 
+    Trash2, 
+    Plus, 
+    Check, 
+    Globe, 
+    Link as LinkIcon, 
+    Video,
+    Edit3,
+    Plus as PlusIcon,
+    Star,
+    ShieldCheck,
+    AlertCircle as AlertIcon,
+} from 'lucide-react';
+import { Modal, ScrollArea, ColorSwatch, Group as MantineGroup, Tooltip as MantineTooltip, UnstyledButton, ColorInput, ActionIcon as MantineActionIcon, Stack as MantineStack, Text as MantineText } from '@mantine/core';
+import { DesignStudio, GARMENT_COLORS } from '@/Components/Design/DesignStudio';
 
 interface Collection {
     id: number;
@@ -13,6 +31,17 @@ interface InventoryProduct {
     id: number;
     name: string;
     sku: string | null;
+}
+
+interface Review {
+    id: number;
+    rating: number;
+    comment: string;
+    user_name: string;
+    user_email: string | null;
+    status: 'pending' | 'approved' | 'rejected';
+    is_verified_purchase: boolean;
+    created_at: string;
 }
 
 interface CatalogProduct {
@@ -30,6 +59,10 @@ interface CatalogProduct {
     is_published: boolean;
     inventory_product_id: number | null;
     collections: Collection[];
+    available_colors: string[] | null;
+    available_sizes: string[] | null;
+    available_genders: string[] | null;
+    reviews?: Review[];
 }
 
 export default function CatalogProductsEdit({ product, collections, inventoryProducts }: {
@@ -53,6 +86,9 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
         collection_ids: product.collections.map(c => c.id),
         is_published: !!product.is_published,
         inventory_product_id: product.inventory_product_id || '',
+        available_colors: product.available_colors || [],
+        available_sizes: product.available_sizes || ['S', 'M', 'L', 'XL'],
+        available_genders: product.available_genders || ['CABALLERO', 'DAMA'],
     });
 
     const [newImages, setNewImages] = useState<File[]>([]);
@@ -63,6 +99,15 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
 
     const [newDetailImage, setNewDetailImage] = useState<File | null>(null);
     const [detailPreviewUrl, setDetailPreviewUrl] = useState<string | null>(null);
+
+    const [newDesignFront, setNewDesignFront] = useState<File | null>(null);
+    const [designFrontPreview, setDesignFrontPreview] = useState<string | null>(null);
+
+    const [newDesignBack, setNewDesignBack] = useState<File | null>(null);
+    const [designBackPreview, setDesignBackPreview] = useState<string | null>(null);
+
+    const [isStudioOpen, setIsStudioOpen] = useState(false);
+    const [customColor, setCustomColor] = useState('#FFFFFF');
 
     const [processing, setProcessing] = useState(false);
 
@@ -136,6 +181,42 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
         });
     };
 
+    const addColor = (hex: string) => {
+        if (!form.available_colors.includes(hex.toUpperCase())) {
+            setForm(prev => ({
+                ...prev,
+                available_colors: [...prev.available_colors, hex.toUpperCase()]
+            }));
+        }
+    };
+
+    const removeColor = (hex: string) => {
+        setForm(prev => ({
+            ...prev,
+            available_colors: prev.available_colors.filter(c => c !== hex)
+        }));
+    };
+
+    const toggleSize = (size: string) => {
+        setForm(prev => {
+            const has = prev.available_sizes.includes(size);
+            return {
+                ...prev,
+                available_sizes: has ? prev.available_sizes.filter(x => x !== size) : [...prev.available_sizes, size]
+            };
+        });
+    };
+
+    const toggleGender = (gender: string) => {
+        setForm(prev => {
+            const has = prev.available_genders.includes(gender);
+            return {
+                ...prev,
+                available_genders: has ? prev.available_genders.filter(x => x !== gender) : [...prev.available_genders, gender]
+            };
+        });
+    };
+
     // -- Submit --
 
     const submit = () => {
@@ -155,12 +236,16 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
             is_published: form.is_published ? 1 : 0,
             inventory_product_id: form.inventory_product_id || null,
             new_images: newImages,
-            remove_video: form.remove_video ? 1 : 0,
             remove_detail_image: form.remove_detail_image ? 1 : 0,
+            available_colors: form.available_colors,
+            available_sizes: form.available_sizes,
+            available_genders: form.available_genders,
         };
 
         if (newVideo) data.new_video = newVideo;
         if (newDetailImage) data.new_detail_image = newDetailImage;
+        if (newDesignFront) data.new_design_front = newDesignFront;
+        if (newDesignBack) data.new_design_back = newDesignBack;
 
         router.post(route('catalog-products.update', product.id), data, {
             preserveScroll: true,
@@ -383,15 +468,207 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium text-foreground mb-1.5 block">Diseño (Acordeón 3)</label>
-                            <textarea
-                                rows={4}
-                                value={form.product_design}
-                                onChange={e => setForm(p => ({ ...p, product_design: e.target.value }))}
-                                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none placeholder:text-muted-foreground"
-                                placeholder="Inspiración gráfica, significado de estampados, silueta de diseño."
+                            <label className="text-sm font-medium text-foreground mb-1.5 block">Diseño (JSON Avanzado)</label>
+                            <div className="flex gap-2">
+                                <textarea
+                                    rows={2}
+                                    value={form.product_design}
+                                    onChange={e => setForm(p => ({ ...p, product_design: e.target.value }))}
+                                    className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary resize-none placeholder:text-muted-foreground"
+                                    placeholder='{"product": {"id": "tshirt"}, "elements": {...}}'
+                                />
+                                <button
+                                    onClick={() => setIsStudioOpen(true)}
+                                    className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg flex flex-col items-center justify-center gap-1 transition-colors"
+                                    title="Abrir Editor Visual"
+                                >
+                                    <Edit3 className="h-5 w-5" />
+                                    <span className="text-[10px] font-bold uppercase">Studio</span>
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-1 italic">Este campo se auto-actualiza al usar el Studio o subir diseños abajo.</p>
+                        </div>
+                    </div>
+
+                    {/* Design Studio Modal */}
+                    <Modal 
+                        opened={isStudioOpen} 
+                        onClose={() => setIsStudioOpen(false)} 
+                        size="95%" 
+                        radius="md" 
+                        padding={0}
+                        withCloseButton={false}
+                        scrollAreaComponent={ScrollArea.Autosize}
+                    >
+                        <div className="relative">
+                            <button 
+                                onClick={() => setIsStudioOpen(false)}
+                                className="absolute top-4 right-4 z-[1000] p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white transition-all border border-white/20"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
+                            <DesignStudio 
+                                gender="Caballero" 
+                                initialData={form.product_design ? (typeof form.product_design === 'string' ? JSON.parse(form.product_design) : form.product_design) : null}
+                                onSave={(data) => {
+                                    setForm(prev => ({ ...prev, product_design: JSON.stringify(data) }));
+                                }} 
                             />
                         </div>
+                    </Modal>
+
+                    {/* Quick Design Upload Panel */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                            <Plus className="h-5 w-5 text-primary" /> Carga Rápida de Diseño (Mockup)
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-6">
+                            Sube tus diseños en PNG (transparente) para que el mockup dinámico los muestre sobre la prenda.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Front Design */}
+                            <div>
+                                <label className="text-sm font-medium text-zinc-400 mb-2 block uppercase tracking-wider">FRENTE</label>
+                                <div className="aspect-square relative rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden bg-zinc-900/50">
+                                    {designFrontPreview ? (
+                                        <div className="relative w-full h-full p-4">
+                                            <img src={designFrontPreview} className="w-full h-full object-contain" alt="Front Preview" />
+                                            <button onClick={() => { setNewDesignFront(null); setDesignFrontPreview(null); }} className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-full">
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-800/50 transition-colors gap-2">
+                                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                            <span className="text-xs font-medium text-muted-foreground">Subir PNG Frontal</span>
+                                            <input type="file" accept="image/png" className="hidden" onChange={(e) => {
+                                                const f = e.target.files?.[0];
+                                                if (f) { setNewDesignFront(f); setDesignFrontPreview(URL.createObjectURL(f)); }
+                                            }} />
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Back Design */}
+                            <div>
+                                <label className="text-sm font-medium text-zinc-400 mb-2 block uppercase tracking-wider">ESPALDA</label>
+                                <div className="aspect-square relative rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden bg-zinc-900/50">
+                                    {designBackPreview ? (
+                                        <div className="relative w-full h-full p-4">
+                                            <img src={designBackPreview} className="w-full h-full object-contain" alt="Back Preview" />
+                                            <button onClick={() => { setNewDesignBack(null); setDesignBackPreview(null); }} className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-full">
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-800/50 transition-colors gap-2">
+                                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                            <span className="text-xs font-medium text-muted-foreground">Subir PNG Posterior</span>
+                                            <input type="file" accept="image/png" className="hidden" onChange={(e) => {
+                                                const f = e.target.files?.[0];
+                                                if (f) { setNewDesignBack(f); setDesignBackPreview(URL.createObjectURL(f)); }
+                                            }} />
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Reviews Moderation Panel */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                            <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" /> Moderación de Reseñas
+                        </h3>
+                        
+                        {!product.reviews || product.reviews.length === 0 ? (
+                            <div className="text-center py-8 bg-muted/20 rounded-lg border border-dashed text-zinc-500">
+                                <p className="text-sm">No hay reseñas para este producto todavía.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {product.reviews.map((review: any) => (
+                                    <div key={review.id} className={`p-4 rounded-lg border ${review.status === 'pending' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-background border-border shadow-sm'}`}>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-sm text-zinc-100">
+                                                        {review.user_name} 
+                                                        {review.user_email && <span className="text-xs text-muted-foreground/60 font-normal italic ml-2">({review.user_email})</span>}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">• {new Date(review.created_at).toLocaleDateString()}</span>
+                                                    {review.status === 'pending' && (
+                                                        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-500 text-[10px] font-bold rounded-full border border-amber-500/30 uppercase">Pendiente</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1 mt-1">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <Star key={i} size={12} className={i < review.rating ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className={`h-8 px-2 text-[10px] font-bold uppercase ${review.is_verified_purchase ? 'text-emerald-500 border-emerald-500/50 bg-emerald-500/10' : 'text-zinc-400 border-zinc-700'}`}
+                                                    onClick={() => {
+                                                        router.post(route('reviews.updateStatus', review.id), {
+                                                            status: review.status,
+                                                            is_verified_purchase: !review.is_verified_purchase
+                                                        }, { preserveScroll: true });
+                                                    }}
+                                                >
+                                                    <ShieldCheck className={`h-3 w-3 mr-1 ${review.is_verified_purchase ? 'fill-emerald-500' : ''}`} />
+                                                    {review.is_verified_purchase ? 'Verificado' : 'No Verificado'}
+                                                </Button>
+                                                
+                                                <div className="h-4 w-px bg-border mx-1" />
+                                                
+                                                <button 
+                                                    onClick={() => router.delete(route('reviews.destroy', review.id), { preserveScroll: true, onBefore: () => confirm('¿Estás seguro de borrar esta reseña?') })}
+                                                    className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                                                    title="Eliminar Reseña"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <p className="text-sm text-zinc-300 my-3 leading-relaxed">
+                                            {review.comment}
+                                        </p>
+                                        
+                                        <div className="flex gap-2 mt-4 pt-3 border-t border-border/50">
+                                            {review.status !== 'approved' && (
+                                                <Button 
+                                                    size="sm" 
+                                                    className="h-8 bg-emerald-600 hover:bg-emerald-700 text-[10px] font-bold uppercase"
+                                                    onClick={() => router.post(route('reviews.updateStatus', review.id), { status: 'approved' }, { preserveScroll: true })}
+                                                >
+                                                    Aprobar
+                                                </Button>
+                                            )}
+                                            {review.status !== 'rejected' && (
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="h-8 text-[10px] font-bold uppercase text-zinc-400 border-zinc-700"
+                                                    onClick={() => router.post(route('reviews.updateStatus', review.id), { status: 'rejected' }, { preserveScroll: true })}
+                                                >
+                                                    Rechazar
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <p className="text-[10px] text-muted-foreground mt-4 italic">
+                            Las reseñas marcadas como "Aprobadas" aparecerán en la tienda. "Verificado" añade un sello de confianza.
+                        </p>
                     </div>
                 </div>
 
@@ -418,6 +695,120 @@ export default function CatalogProductsEdit({ product, collections, inventoryPro
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.is_published ? 'translate-x-6' : 'translate-x-1'}`} />
                             </div>
                         </label>
+                    </div>
+
+                    {/* Available Colors Selection */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-foreground mb-4">Colores de Prenda</h3>
+                        
+                        <div className="space-y-6">
+                            {/* Preset Selection Grid */}
+                            <div>
+                                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Presets del Studio</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {GARMENT_COLORS.map(c => {
+                                        const isSelected = form.available_colors.includes(c.value);
+                                        return (
+                                            <MantineTooltip key={c.value} label={c.label}>
+                                                <UnstyledButton 
+                                                    onClick={() => isSelected ? removeColor(c.value) : addColor(c.value)}
+                                                    className={`p-1 rounded-full border-2 transition-all ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-transparent opacity-60 hover:opacity-100 hover:border-border'}`}
+                                                >
+                                                    <ColorSwatch color={c.value} size={28} />
+                                                </UnstyledButton>
+                                            </MantineTooltip>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Custom Color Selector */}
+                            <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                                <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Añadir Color Personalizado</p>
+                                <div className="flex gap-2">
+                                    <ColorInput 
+                                        value={customColor} 
+                                        onChange={setCustomColor}
+                                        placeholder="#000000"
+                                        className="flex-1"
+                                        radius="md"
+                                        size="xs"
+                                        styles={{ input: { color: '#000' } }}
+                                    />
+                                    <Button 
+                                        type="button" 
+                                        size="sm" 
+                                        variant="outline"
+                                        className="h-auto"
+                                        onClick={() => addColor(customColor)}
+                                    >
+                                        <PlusIcon className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Active List */}
+                            {form.available_colors.length > 0 && (
+                                <div>
+                                    <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wider">Lista Activa ({form.available_colors.length})</p>
+                                    <div className="flex flex-wrap gap-1.5 p-3 bg-background rounded-lg border border-border min-h-[50px]">
+                                        {form.available_colors.map((hex, i) => (
+                                            <div key={i} className="group relative">
+                                                <ColorSwatch color={hex} size={30} />
+                                                <button 
+                                                    onClick={() => removeColor(hex)}
+                                                    className="absolute -top-1 -right-1 p-0.5 bg-destructive text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-white shadow-sm"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground mt-2 italic">Haz clic en la 'x' para remover un color de la tienda.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    {/* Available Sizes Selection */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-foreground mb-4">Tallas Disponibles</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'].map(size => {
+                                const active = form.available_sizes.includes(size);
+                                return (
+                                    <button
+                                        key={size}
+                                        onClick={() => toggleSize(size)}
+                                        className={`px-3 py-1.5 rounded-md border text-xs font-bold transition-all ${active ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background text-muted-foreground border-border hover:border-primary/50'}`}
+                                    >
+                                        {size}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-3 italic">Selecciona las tallas que el cliente podrá elegir.</p>
+                    </div>
+
+                    {/* Available Genders Selection */}
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-foreground mb-4">Géneros / Versiones</h3>
+                        <div className="space-y-2">
+                            {['CABALLERO', 'DAMA', 'UNISEX', 'NIÑO', 'NIÑA'].map(gender => {
+                                const active = form.available_genders.includes(gender);
+                                return (
+                                    <button
+                                        key={gender}
+                                        onClick={() => toggleGender(gender)}
+                                        className={`w-full flex items-center justify-between px-4 py-2 border rounded-lg transition-colors text-left ${active ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30 hover:bg-muted/30'}`}
+                                    >
+                                        <span className={`text-xs font-semibold ${active ? 'text-primary' : 'text-foreground'}`}>
+                                            {gender}
+                                        </span>
+                                        {active && <Check className="h-3 w-3 text-primary" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* Linking Inventory */}

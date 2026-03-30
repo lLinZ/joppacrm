@@ -55,7 +55,9 @@ class CatalogProductController extends Controller
         // Cargar productos de inventario para vinculación opcional
         $inventoryProducts = Product::select('id', 'name', 'sku')->orderBy('name')->get();
         
-        $catalog_product->load('collections');
+        $catalog_product->load(['collections', 'reviews' => function($q) {
+            $q->orderBy('created_at', 'desc');
+        }]);
 
         return Inertia::render('CatalogProducts/Edit', [
             'product' => $catalog_product,
@@ -77,6 +79,12 @@ class CatalogProductController extends Controller
             'product_information' => 'nullable|string',
             'product_features' => 'nullable|string',
             'product_design' => 'nullable|string',
+            'available_colors' => 'nullable|array',
+            'available_colors.*' => 'string',
+            'available_sizes' => 'nullable|array',
+            'available_sizes.*' => 'string',
+            'available_genders' => 'nullable|array',
+            'available_genders.*' => 'string',
             'is_published' => 'boolean',
             'inventory_product_id' => 'nullable|exists:products,id',
             'catalog_order' => 'integer',
@@ -88,6 +96,8 @@ class CatalogProductController extends Controller
             'new_images.*' => 'image|max:10240', // Max 10MB per image
             'new_video' => 'nullable|mimes:mp4,mov,ogg,qt|max:20480', // Max 20MB
             'new_detail_image' => 'nullable|image|max:10240',
+            'new_design_front' => 'nullable|image|max:10240',
+            'new_design_back' => 'nullable|image|max:10240',
             'remove_video' => 'nullable|boolean',
             'remove_detail_image' => 'nullable|boolean',
         ]);
@@ -125,8 +135,15 @@ class CatalogProductController extends Controller
             'description' => $validated['description'] ?? null,
             'product_information' => $validated['product_information'] ?? null,
             'product_features' => $validated['product_features'] ?? null,
-            'product_design' => $validated['product_design'] ?? null,
+            'product_design' => $this->processProductDesign(
+                $validated['product_design'] ?? null,
+                $request->file('new_design_front'),
+                $request->file('new_design_back')
+            ),
             'catalog_order' => $validated['catalog_order'] ?? 0,
+            'available_colors' => $validated['available_colors'] ?? null,
+            'available_sizes' => $validated['available_sizes'] ?? null,
+            'available_genders' => $validated['available_genders'] ?? null,
             'is_published' => $validated['is_published'] ?? false,
             'inventory_product_id' => $validated['inventory_product_id'] ?? null,
             'images' => $images,
@@ -141,6 +158,65 @@ class CatalogProductController extends Controller
         }
 
         return redirect()->route('catalog-products.edit', $catalog_product->id)->with('success', 'Detalles del catálogo actualizados correctamente.');
+    }
+
+    /**
+     * Process and build the product_design JSON with new design uploads.
+     */
+    private function processProductDesign($existingJson, $frontFile, $backFile)
+    {
+        $design = null;
+        if ($existingJson) {
+            $design = json_decode($existingJson, true);
+        }
+
+        if (!$design) {
+            $design = [
+                'product' => ['id' => 'tshirt', 'name' => 'Franela'],
+                'color' => '#FFFFFF',
+                'elements' => ['front' => [], 'back' => []]
+            ];
+        }
+
+        if ($frontFile) {
+            $path = $frontFile->store('catalog/designs', 'public');
+            $url = asset('storage/' . $path);
+            
+            // Reemplazar o añadir diseño frontal
+            $design['elements']['front'] = [
+                [
+                    'id' => 'front-main-' . time(),
+                    'type' => 'image',
+                    'content' => $url,
+                    'x' => 250,
+                    'y' => 250,
+                    'width' => 500,
+                    'height' => 500,
+                    'rotation' => 0
+                ]
+            ];
+        }
+
+        if ($backFile) {
+            $path = $backFile->store('catalog/designs', 'public');
+            $url = asset('storage/' . $path);
+            
+            // Reemplazar o añadir diseño posterior
+            $design['elements']['back'] = [
+                [
+                    'id' => 'back-main-' . time(),
+                    'type' => 'image',
+                    'content' => $url,
+                    'x' => 250,
+                    'y' => 250,
+                    'width' => 500,
+                    'height' => 500,
+                    'rotation' => 0
+                ]
+            ];
+        }
+
+        return json_encode($design);
     }
 
     /**

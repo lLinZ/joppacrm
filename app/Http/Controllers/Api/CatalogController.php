@@ -66,6 +66,13 @@ class CatalogController extends Controller
         }
 
         $product->load(['collections']);
+        
+        // Include review stats for SEO
+        $approvedReviews = $product->reviews()->approved()->get();
+        $product->status_reviews = [
+            'count' => $approvedReviews->count(),
+            'average' => round($approvedReviews->avg('rating') ?: 0, 1),
+        ];
 
         return response()->json(['product' => $product]);
     }

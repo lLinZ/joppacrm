@@ -663,7 +663,7 @@ export default function Show({ request, catalogProducts }: Props) {
                                                                     </Button>
                                                                 </div>
                                                                 <div className="flex justify-center">
-                                                                    <div className="w-full max-w-[800px]">
+                                                                    <div className="w-full max-w-[1100px]">
                                                                         <DesignPreview 
                                                                             ref={backRef} 
                                                                             design={designObj} 

@@ -26,9 +26,15 @@ class CatalogProduct extends Model
         'views_count',
         'unique_views_count',
         'sales_count',
+        'available_colors',
+        'available_sizes',
+        'available_genders',
     ];
 
     protected $casts = [
+        'available_colors' => 'array',
+        'available_sizes' => 'array',
+        'available_genders' => 'array',
         'images' => 'array',
         'is_published' => 'boolean',
     ];
@@ -52,5 +58,10 @@ class CatalogProduct extends Model
     public function inventoryProduct()
     {
         return $this->belongsTo(Product::class, 'inventory_product_id');
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(CatalogProductReview::class, 'catalog_product_id');
     }
 }
