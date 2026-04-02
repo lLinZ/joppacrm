@@ -114,11 +114,101 @@ class BuilderConfigController extends Controller
     private function loadConfig(): array
     {
         if (!Storage::disk('local')->exists($this->configPath)) {
-            return [
-                'products' => [],
-                'fonts'    => [],
-                'genders'  => ['Caballero', 'Dama'],
+            $defaultConfig = [
+                'products' => [
+                    [
+                        'id' => 'hoodie',
+                        'name' => 'Hoodie Premium',
+                        'basePrice' => 35,
+                        'enabled' => true,
+                        'variants' => [
+                            'Caballero' => [
+                                'enabled' => true,
+                                'assets' => [
+                                    'front' => '/images/custom_design_builder/hoodie_sin_fondo_front.png',
+                                    'back'  => '/images/custom_design_builder/hoodie_sin_fondo_back.png',
+                                ],
+                                'colors' => [
+                                    ['label' => 'Negro',       'value' => '#1A1A1A', 'enabled' => true],
+                                    ['label' => 'Blanco',      'value' => '#FFFFFF', 'enabled' => true],
+                                    ['label' => 'Verde Bosque','value' => '#0B3022', 'enabled' => true],
+                                    ['label' => 'Gris Carbon', 'value' => '#4A4A4A', 'enabled' => true],
+                                    ['label' => 'Azul Marino', 'value' => '#1F2640', 'enabled' => true],
+                                    ['label' => 'Rojo Vino',   'value' => '#6B1B1B', 'enabled' => false],
+                                ],
+                                'sizes' => ['S', 'M', 'L', 'XL', '2XL'],
+                            ],
+                            'Dama' => [
+                                'enabled' => true,
+                                'assets' => [
+                                    'front' => '/images/custom_design_builder/hoodie_sin_fondo_front.png',
+                                    'back'  => '/images/custom_design_builder/hoodie_sin_fondo_back.png',
+                                ],
+                                'colors' => [
+                                    ['label' => 'Negro',       'value' => '#1A1A1A', 'enabled' => true],
+                                    ['label' => 'Blanco',      'value' => '#FFFFFF', 'enabled' => true],
+                                    ['label' => 'Beige',       'value' => '#D5BEA4', 'enabled' => true],
+                                    ['label' => 'Verde Bosque','value' => '#0B3022', 'enabled' => true],
+                                    ['label' => 'Oliva',       'value' => '#556B2F', 'enabled' => false],
+                                ],
+                                'sizes' => ['XS', 'S', 'M', 'L', 'XL'],
+                            ],
+                        ],
+                    ],
+                    [
+                        'id' => 'oversize',
+                        'name' => 'T-Shirt Oversize',
+                        'basePrice' => 20,
+                        'enabled' => true,
+                        'variants' => [
+                            'Caballero' => [
+                                'enabled' => true,
+                                'assets' => [
+                                    'front' => '/images/custom_design_builder/franela_blanca_sin_fondo.png',
+                                    'back'  => '/images/custom_design_builder/franela_blanca_sin_fondo_back.png',
+                                ],
+                                'colors' => [
+                                    ['label' => 'Blanco',      'value' => '#FFFFFF', 'enabled' => true],
+                                    ['label' => 'Negro',       'value' => '#1A1A1A', 'enabled' => true],
+                                    ['label' => 'Beige',       'value' => '#D5BEA4', 'enabled' => true],
+                                    ['label' => 'Verde Bosque','value' => '#0B3022', 'enabled' => true],
+                                    ['label' => 'Gris Carbon', 'value' => '#4A4A4A', 'enabled' => false],
+                                ],
+                                'sizes' => ['S', 'M', 'L', 'XL', '2XL', '3XL'],
+                            ],
+                            'Dama' => [
+                                'enabled' => true,
+                                'assets' => [
+                                    'front' => '/images/custom_design_builder/franela_blanca_sin_fondo.png',
+                                    'back'  => '/images/custom_design_builder/franela_blanca_sin_fondo_back.png',
+                                ],
+                                'colors' => [
+                                    ['label' => 'Blanco', 'value' => '#FFFFFF', 'enabled' => true],
+                                    ['label' => 'Negro',  'value' => '#1A1A1A', 'enabled' => true],
+                                    ['label' => 'Beige',  'value' => '#D5BEA4', 'enabled' => true],
+                                    ['label' => 'Oliva',  'value' => '#556B2F', 'enabled' => true],
+                                ],
+                                'sizes' => ['XS', 'S', 'M', 'L', 'XL'],
+                            ],
+                        ],
+                    ],
+                ],
+                'fonts' => [
+                    ['label' => 'Montserrat',       'value' => 'Montserrat, sans-serif'],
+                    ['label' => 'Bebas Neue',       'value' => 'Bebas Neue, sans-serif'],
+                    ['label' => 'Caveat',           'value' => 'Caveat, cursive'],
+                    ['label' => 'Playfair Display', 'value' => 'Playfair Display, serif'],
+                ],
+                'genders' => ['Caballero', 'Dama'],
             ];
+
+            // Auto-create file on VPS if it doesn't exist
+            Storage::disk('local')->put(
+                $this->configPath,
+                json_encode($defaultConfig, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+            );
+
+            return $defaultConfig;
         }
 
         $content = Storage::disk('local')->get($this->configPath);
