@@ -13,46 +13,59 @@ class BuilderConfigController extends Controller
 
     /**
      * Public endpoint: Returns the active builder configuration for the e-commerce.
-     * Only returns enabled items.
+     * Filters out disabled colors per variant, and disabled variants/products.
      */
     public function index()
     {
         $config = $this->loadConfig();
 
-        // Filter only enabled items for the public API
-        $publicConfig = [
-            'colors' => collect($config['colors'] ?? [])
-                ->filter(fn($c) => $c['enabled'] ?? true)
-                ->map(fn($c) => ['label' => $c['label'], 'value' => $c['value']])
-                ->values()
-                ->toArray(),
-            'sizes' => $config['sizes'] ?? ['S', 'M', 'L', 'XL'],
-            'products' => collect($config['products'] ?? [])
-                ->filter(fn($p) => $p['enabled'] ?? true)
-                ->map(fn($p) => [
-                    'id' => $p['id'],
-                    'name' => $p['name'],
-                    'basePrice' => $p['basePrice'],
-                    'assets' => $p['assets'],
-                ])
-                ->values()
-                ->toArray(),
-            'fonts' => $config['fonts'] ?? [],
-            'genders' => $config['genders'] ?? ['Caballero', 'Dama'],
-        ];
+        $products = collect($config['products'] ?? [])
+            ->filter(fn($p) => $p['enabled'] ?? true)
+            ->map(function ($p) {
+                // Filter variants: only enabled ones
+                $variants = [];
+                foreach (($p['variants'] ?? []) as $gender => $variant) {
+                    if (!($variant['enabled'] ?? true)) continue;
 
-        return response()->json($publicConfig);
+                    // Filter enabled colors only
+                    $colors = collect($variant['colors'] ?? [])
+                        ->filter(fn($c) => $c['enabled'] ?? true)
+                        ->map(fn($c) => ['label' => $c['label'], 'value' => $c['value']])
+                        ->values()
+                        ->toArray();
+
+                    $variants[$gender] = [
+                        'assets'  => $variant['assets'] ?? [],
+                        'colors'  => $colors,
+                        'sizes'   => $variant['sizes'] ?? [],
+                    ];
+                }
+
+                return [
+                    'id'        => $p['id'],
+                    'name'      => $p['name'],
+                    'basePrice' => $p['basePrice'],
+                    'variants'  => $variants,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        return response()->json([
+            'products' => $products,
+            'fonts'    => $config['fonts'] ?? [],
+            'genders'  => $config['genders'] ?? ['Caballero', 'Dama'],
+        ]);
     }
 
     /**
-     * Admin endpoint: Returns the FULL configuration including disabled items.
+     * Admin endpoint: Returns the FULL config (including disabled items).
      * Returns Inertia page or JSON depending on request context.
      */
     public function adminIndex(Request $request)
     {
         $config = $this->loadConfig();
 
-        // If called from web (Inertia), render the page
         if (!$request->expectsJson() && !$request->is('api/*')) {
             return Inertia::render('Settings/BuilderSettings', [
                 'config' => $config,
@@ -67,53 +80,44 @@ class BuilderConfigController extends Controller
      */
     public function update(Request $request)
     {
-        $validated = $request->validate([
-            'colors' => 'required|array|min:1',
-            'colors.*.label' => 'required|string|max:50',
-            'colors.*.value' => 'required|string|max:10',
-            'colors.*.enabled' => 'required|boolean',
-            'sizes' => 'required|array|min:1',
-            'sizes.*' => 'required|string|max:10',
-            'products' => 'required|array|min:1',
-            'products.*.id' => 'required|string|max:50',
-            'products.*.name' => 'required|string|max:100',
+        $request->validate([
+            'products'             => 'required|array|min:1',
+            'products.*.id'        => 'required|string|max:50',
+            'products.*.name'      => 'required|string|max:100',
             'products.*.basePrice' => 'required|numeric|min:0',
-            'products.*.enabled' => 'required|boolean',
-            'products.*.assets' => 'required|array',
-            'fonts' => 'sometimes|array',
-            'genders' => 'sometimes|array',
+            'products.*.enabled'   => 'required|boolean',
+            'products.*.variants'  => 'required|array',
+            'fonts'                => 'sometimes|array',
+            'genders'              => 'sometimes|array',
         ]);
 
-        // Merge with defaults for optional fields
+        $existing = $this->loadConfig();
+
         $config = [
-            'colors' => $validated['colors'],
-            'sizes' => $validated['sizes'],
-            'products' => $validated['products'],
-            'fonts' => $validated['fonts'] ?? $this->loadConfig()['fonts'] ?? [],
-            'genders' => $validated['genders'] ?? $this->loadConfig()['genders'] ?? ['Caballero', 'Dama'],
+            'products' => $request->products,
+            'fonts'    => $request->fonts ?? $existing['fonts'] ?? [],
+            'genders'  => $request->genders ?? $existing['genders'] ?? ['Caballero', 'Dama'],
         ];
 
-        Storage::disk('local')->put($this->configPath, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        Storage::disk('local')->put(
+            $this->configPath,
+            json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        );
 
         if (!$request->expectsJson() && !$request->is('api/*')) {
             return back()->with('success', 'Configuración del builder actualizada correctamente.');
         }
 
-        return response()->json(['message' => 'Configuración guardada correctamente.', 'config' => $config]);
+        return response()->json(['message' => 'Guardado correctamente.', 'config' => $config]);
     }
 
     private function loadConfig(): array
     {
         if (!Storage::disk('local')->exists($this->configPath)) {
             return [
-                'colors' => [
-                    ['label' => 'Negro', 'value' => '#1A1A1A', 'enabled' => true],
-                    ['label' => 'Blanco', 'value' => '#FFFFFF', 'enabled' => true],
-                ],
-                'sizes' => ['S', 'M', 'L', 'XL'],
                 'products' => [],
-                'fonts' => [],
-                'genders' => ['Caballero', 'Dama'],
+                'fonts'    => [],
+                'genders'  => ['Caballero', 'Dama'],
             ];
         }
 
