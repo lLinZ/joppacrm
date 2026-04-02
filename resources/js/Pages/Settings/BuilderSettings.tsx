@@ -555,7 +555,7 @@ function AssetManagerModal({ onClose, onSelect }: { onClose: () => void, onSelec
     const fetchAssets = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('/api/builder-assets');
+            const res = await axios.get('/settings/builder-assets');
             setAssets(res.data);
         } catch (e) {
             console.error("Error fetching assets", e);
@@ -583,7 +583,7 @@ function AssetManagerModal({ onClose, onSelect }: { onClose: () => void, onSelec
         formData.append('image', file);
 
         try {
-            const res = await axios.post('/api/builder-assets', formData, {
+            const res = await axios.post('/settings/builder-assets', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             await fetchAssets();
@@ -601,7 +601,7 @@ function AssetManagerModal({ onClose, onSelect }: { onClose: () => void, onSelec
         if (!confirm('¿Seguro que deseas eliminar esta imagen permanentemente del servidor?')) return;
         
         try {
-            await axios.delete(`/api/builder-assets/${filename}`);
+            await axios.delete(`/settings/builder-assets/${filename}`);
             await fetchAssets();
         } catch (error) {
             alert('Error al eliminar la imagen');

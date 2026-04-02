@@ -57,6 +57,11 @@ Route::middleware('auth')->group(function () {
     // Builder Configuration for E-commerce
     Route::get('/settings/builder', [\App\Http\Controllers\Api\BuilderConfigController::class, 'adminIndex'])->name('settings.builder.index');
     Route::post('/settings/builder', [\App\Http\Controllers\Api\BuilderConfigController::class, 'update'])->name('settings.builder.update');
+
+    // Builder Assets Manager
+    Route::get('/settings/builder-assets', [\App\Http\Controllers\Api\BuilderAssetController::class, 'index'])->name('settings.builder-assets.index');
+    Route::post('/settings/builder-assets', [\App\Http\Controllers\Api\BuilderAssetController::class, 'store'])->name('settings.builder-assets.store');
+    Route::delete('/settings/builder-assets/{filename}', [\App\Http\Controllers\Api\BuilderAssetController::class, 'destroy'])->name('settings.builder-assets.destroy');
 });
 
 require __DIR__.'/auth.php';

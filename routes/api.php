@@ -32,14 +32,10 @@ Route::post('/contact-messages', [\App\Http\Controllers\Api\ContactMessageContro
 // Public builder config (consumed by joppa-ecommerce)
 Route::get('/builder-config', [BuilderConfigController::class, 'index']);
 
-// Admin builder config & assets (protected - CRM only)
+// Admin builder config (protected - CRM only)
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/builder-config/admin', [BuilderConfigController::class, 'adminIndex']);
     Route::post('/builder-config', [BuilderConfigController::class, 'update']);
-    
-    Route::get('/builder-assets', [\App\Http\Controllers\Api\BuilderAssetController::class, 'index']);
-    Route::post('/builder-assets', [\App\Http\Controllers\Api\BuilderAssetController::class, 'store']);
-    Route::delete('/builder-assets/{filename}', [\App\Http\Controllers\Api\BuilderAssetController::class, 'destroy']);
 });
 
 // Web traffic heartbeat tracking
