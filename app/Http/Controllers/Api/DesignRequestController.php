@@ -66,6 +66,9 @@ class DesignRequestController extends Controller
             ]);
         }
 
+        $users = \App\Models\User::all();
+        \Illuminate\Support\Facades\Notification::send($users, new \App\Notifications\NewDesignRequestNotification($designRequest->fresh()));
+
         return response()->json([
             'message'        => 'Solicitud recibida exitosamente.',
             'design_request' => $designRequest->load('items')
