@@ -121,6 +121,9 @@ class BuilderConfigController extends Controller
             ];
         }
 
-        return json_decode(Storage::disk('local')->get($this->configPath), true) ?? [];
+        $content = Storage::disk('local')->get($this->configPath);
+        // Strip UTF-8 BOM if present (common when file is written by Windows tools)
+        $content = ltrim($content, "\xef\xbb\xbf");
+        return json_decode($content, true) ?? [];
     }
 }
