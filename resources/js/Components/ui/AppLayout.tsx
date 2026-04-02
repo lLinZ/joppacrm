@@ -103,6 +103,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { name: 'Gastos', href: route('expenses.index'), routeName: 'expenses.*', icon: Receipt },
         { name: 'Usuarios', href: route('users.index'), routeName: 'users.*', icon: UserCog },
         { name: 'Tasas de Cambio', href: route('exchange-rates.index'), routeName: 'exchange-rates.*', icon: Settings },
+        { name: 'Config. Builder', href: route('settings.builder.index'), routeName: 'settings.builder.*', icon: Palette },
     ];
 
     useEffect(() => {

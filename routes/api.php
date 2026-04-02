@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\CatalogController;
+use App\Http\Controllers\Api\BuilderConfigController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -27,6 +28,15 @@ Route::prefix('catalog')->group(function () {
 Route::post('/design-requests', [\App\Http\Controllers\Api\DesignRequestController::class, 'store']);
 Route::post('/design-assets', [\App\Http\Controllers\Api\DesignRequestController::class, 'uploadAsset']);
 Route::post('/contact-messages', [\App\Http\Controllers\Api\ContactMessageController::class, 'store']);
+
+// Public builder config (consumed by joppa-ecommerce)
+Route::get('/builder-config', [BuilderConfigController::class, 'index']);
+
+// Admin builder config (protected - CRM only)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/builder-config/admin', [BuilderConfigController::class, 'adminIndex']);
+    Route::post('/builder-config', [BuilderConfigController::class, 'update']);
+});
 
 // Web traffic heartbeat tracking
 Route::post('/tracking/heartbeat', [\App\Http\Controllers\Api\TrackingController::class, 'heartbeat']);

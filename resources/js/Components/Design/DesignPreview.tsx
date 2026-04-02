@@ -93,6 +93,8 @@ export const DesignPreview = React.forwardRef<HTMLDivElement, DesignPreviewProps
                 boxShadow: (lightBg || hideMockup) ? 'none' : '0 25px 50px rgba(0,0,0,0.5)',
                 transition: 'all 0.4s ease',
                 width: isExporting && containerWidth > 0 ? `${containerWidth}px` : '100%',
+                maxWidth: '600px',
+                margin: '0 auto',
                 aspectRatio: '1000 / 1220',
                 backgroundColor: (hideMockup || lightBg) ? 'transparent' : '#09090b',
                 border: (hideMockup || lightBg) ? 'none' : '1px solid rgba(255,255,255,0.05)',
@@ -107,72 +109,70 @@ export const DesignPreview = React.forwardRef<HTMLDivElement, DesignPreviewProps
                 ref={(node) => {
                     (localRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
                 }}
-                data-preview-version="1.1.0-top-mirror"
-                data-v="sync-2026-03-29"
+                data-preview-version="1.2.0-perfect-sync"
                 style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
             >
-                {/* 1. MOCKUP LAYER */}
-                {!hideMockup && (
-                    <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-                        <img 
-                            src={assetUrl} 
-                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'top center' }} 
-                            alt="" 
-                        />
-                        <div 
-                            style={{ 
-                                position: 'absolute', 
-                                inset: 0, 
-                                backgroundColor: color,
-                                maskImage: `url(${assetUrl})`,
-                                maskSize: 'contain',
-                                maskRepeat: 'no-repeat',
-                                maskPosition: 'top center',
-                                WebkitMaskImage: `url(${assetUrl})`,
-                                WebkitMaskSize: 'contain',
-                                WebkitMaskRepeat: 'no-repeat',
-                                WebkitMaskPosition: 'top center',
-                                mixBlendMode: 'multiply',
-                                opacity: color.toUpperCase() === '#FFFFFF' ? 0 : 0.85 
-                            }} 
-                        />
-                        <img 
-                            src={assetUrl} 
-                            style={{ 
-                                position: 'absolute', 
-                                inset: 0, 
-                                width: '100%', 
-                                height: '100%', 
-                                objectFit: 'contain', 
-                                objectPosition: 'top center',
-                                mixBlendMode: 'multiply',
-                                filter: 'brightness(1.08) contrast(1.08)',
-                                opacity: 0.9,
-                                pointerEvents: 'none'
-                            }} 
-                            alt="" 
-                        />
-                    </div>
-                )}
-
-                {/* 2. DESIGN AREA (THE PERFECT MIRROR) */}
-                {/* Fixed internal 1000px CANVAS scaled and centered to match Studio exactly */}
+                {/* === SINGLE 1000px COORDINATE BOX (MOCKUP + ELEMENTS TOGETHER) === */}
+                {/* This matches EXACTLY how DesignStudio renders it — guaranteed pixel sync */}
                 <div 
-                    style={{
-                        position: 'absolute',
-                        top: 60, // Match Studio top padding
+                    style={{ 
+                        width: '1000px', 
+                        height: '1100px', 
+                        position: 'absolute', 
+                        top: `${60 * mirrorScale}px`, 
                         left: '50%',
-                        width: '1000px',
-                        height: '1100px',
                         transform: `scale(${mirrorScale})`,
                         marginLeft: `-${500 * mirrorScale}px`,
                         transformOrigin: '0 0',
-                        pointerEvents: 'none',
-                        zIndex: 20
+                        backgroundColor: 'transparent', 
+                        zIndex: 10
                     }}
                 >
+                    {/* 1. MOCKUP LAYER */}
+                    {!hideMockup && (
+                        <>
+                            <img 
+                                src={assetUrl} 
+                                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'top center' }} 
+                                alt="" 
+                            />
+                            <div 
+                                style={{ 
+                                    position: 'absolute', 
+                                    inset: 0, 
+                                    backgroundColor: color,
+                                    maskImage: `url(${assetUrl})`,
+                                    maskSize: 'contain',
+                                    maskRepeat: 'no-repeat',
+                                    maskPosition: 'top center',
+                                    WebkitMaskImage: `url(${assetUrl})`,
+                                    WebkitMaskSize: 'contain',
+                                    WebkitMaskRepeat: 'no-repeat',
+                                    WebkitMaskPosition: 'top center',
+                                    mixBlendMode: 'multiply',
+                                    opacity: color.toUpperCase() === '#FFFFFF' ? 0 : 0.85 
+                                }} 
+                            />
+                            <img 
+                                src={assetUrl} 
+                                style={{ 
+                                    position: 'absolute', 
+                                    inset: 0, 
+                                    width: '100%', 
+                                    height: '100%', 
+                                    objectFit: 'contain', 
+                                    objectPosition: 'top center',
+                                    mixBlendMode: 'multiply',
+                                    filter: 'brightness(1.1) contrast(1.1)',
+                                    opacity: 0.9,
+                                    pointerEvents: 'none'
+                                }} 
+                                alt="" 
+                            />
+                        </>
+                    )}
 
-                    {/* RENDER ELEMENTS IN PIXELS (1000px Scale) */}
+                    {/* 2. DESIGN ELEMENTS (same coordinate space as Studio) */}
                     {elements.map((el: any) => (
                         <div
                             key={el.id}
@@ -186,7 +186,8 @@ export const DesignPreview = React.forwardRef<HTMLDivElement, DesignPreviewProps
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                overflow: 'visible'
+                                overflow: 'visible',
+                                zIndex: 100
                             }}
                         >
                             {el.type === 'image' ? (
@@ -194,7 +195,7 @@ export const DesignPreview = React.forwardRef<HTMLDivElement, DesignPreviewProps
                             ) : (
                                 <div style={{ 
                                     color: el.color, 
-                                    fontSize: `${el.fontSize || 30}px`, 
+                                    fontSize: `${el.fontSize || 30}px`,
                                     fontFamily: el.fontFamily,
                                     fontWeight: 'bold',
                                     textAlign: 'center',

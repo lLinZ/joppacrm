@@ -53,6 +53,10 @@ Route::middleware('auth')->group(function () {
         $request->user()->unreadNotifications->markAsRead();
         return back();
     })->name('notifications.mark-read');
+
+    // Builder Configuration for E-commerce
+    Route::get('/settings/builder', [\App\Http\Controllers\Api\BuilderConfigController::class, 'adminIndex'])->name('settings.builder.index');
+    Route::post('/settings/builder', [\App\Http\Controllers\Api\BuilderConfigController::class, 'update'])->name('settings.builder.update');
 });
 
 require __DIR__.'/auth.php';
