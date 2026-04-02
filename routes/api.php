@@ -32,6 +32,9 @@ Route::post('/contact-messages', [\App\Http\Controllers\Api\ContactMessageContro
 // Public builder config (consumed by joppa-ecommerce)
 Route::get('/builder-config', [BuilderConfigController::class, 'index']);
 
+// Public abandoned designs ping (consumed by joppa-ecommerce)
+Route::post('/abandoned-designs/ping', [\App\Http\Controllers\Api\AbandonedDesignController::class, 'ping']);
+
 // Admin builder config (protected - CRM only)
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/builder-config/admin', [BuilderConfigController::class, 'adminIndex']);

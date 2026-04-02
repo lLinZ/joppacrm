@@ -62,6 +62,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/builder-assets', [\App\Http\Controllers\Api\BuilderAssetController::class, 'index'])->name('settings.builder-assets.index');
     Route::post('/settings/builder-assets', [\App\Http\Controllers\Api\BuilderAssetController::class, 'store'])->name('settings.builder-assets.store');
     Route::delete('/settings/builder-assets/{filename}', [\App\Http\Controllers\Api\BuilderAssetController::class, 'destroy'])->name('settings.builder-assets.destroy');
+
+    // Abandoned Designs
+    Route::get('/abandoned-designs', [\App\Http\Controllers\AbandonedDesignController::class, 'index'])->name('abandoned-designs.index');
+    Route::delete('/abandoned-designs/{id}', [\App\Http\Controllers\AbandonedDesignController::class, 'destroy'])->name('abandoned-designs.destroy');
 });
 
 require __DIR__.'/auth.php';
