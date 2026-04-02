@@ -3,7 +3,7 @@
 // Estructura: Por prenda > Por género > Colores + Tallas independientes
 // </ai_context>
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/Components/ui/card";
@@ -64,6 +64,21 @@ export default function BuilderSettings({ config }: Props) {
     const [saving, setSaving] = useState(false);
     const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set([config.products?.[0]?.id].filter(Boolean)));
     const [expandedVariants, setExpandedVariants] = useState<Set<string>>(new Set());
+
+    const [assetModalOpen, setAssetModalOpen] = useState(false);
+    const [activeAssetTarget, setActiveAssetTarget] = useState<{pIdx: number, gender: string, side: 'front' | 'back'} | null>(null);
+
+    const openAssetManager = (pIdx: number, gender: string, side: 'front' | 'back') => {
+        setActiveAssetTarget({ pIdx, gender, side });
+        setAssetModalOpen(true);
+    };
+
+    const handleAssetSelect = (url: string) => {
+        if (activeAssetTarget) {
+            updateAsset(activeAssetTarget.pIdx, activeAssetTarget.gender, activeAssetTarget.side, url);
+        }
+        setAssetModalOpen(false);
+    };
 
     // ── Persist ────────────────────────────────────────────────────────────
     const handleSave = () => {
@@ -291,6 +306,7 @@ export default function BuilderSettings({ config }: Props) {
                                                 onToggleExpand={() => toggleExpandVariant(variantKey)}
                                                 onToggleVariant={() => toggleVariant(pIdx, gender)}
                                                 onUpdateAsset={(side, url) => updateAsset(pIdx, gender, side, url)}
+                                                onOpenAssetManager={(side) => openAssetManager(pIdx, gender, side)}
                                                 onToggleColor={(cIdx) => toggleColor(pIdx, gender, cIdx)}
                                                 onUpdateColor={(cIdx, field, val) => updateColor(pIdx, gender, cIdx, field, val)}
                                                 onRemoveColor={(cIdx) => removeColor(pIdx, gender, cIdx)}
@@ -322,6 +338,14 @@ export default function BuilderSettings({ config }: Props) {
                     </Button>
                 </div>
             </div>
+
+            {/* Modal Gestor de Archivos */}
+            {assetModalOpen && (
+                <AssetManagerModal 
+                    onClose={() => setAssetModalOpen(false)} 
+                    onSelect={handleAssetSelect} 
+                />
+            )}
         </AppLayout>
     );
 }
@@ -336,6 +360,7 @@ interface VariantPanelProps {
     onToggleExpand: () => void;
     onToggleVariant: () => void;
     onUpdateAsset: (side: 'front' | 'back', url: string) => void;
+    onOpenAssetManager: (side: 'front' | 'back') => void;
     onToggleColor: (cIdx: number) => void;
     onUpdateColor: (cIdx: number, field: 'label' | 'value', val: string) => void;
     onRemoveColor: (cIdx: number) => void;
@@ -344,11 +369,12 @@ interface VariantPanelProps {
     onAddSize: (size: string) => void;
 }
 
-import { Image } from 'lucide-react';
+import { Image, UploadCloud, X, Loader2 } from 'lucide-react';
+import axios from 'axios';
 
 function VariantPanel({
     gender, variant, variantKey, isExpanded,
-    onToggleExpand, onToggleVariant, onUpdateAsset,
+    onToggleExpand, onToggleVariant, onUpdateAsset, onOpenAssetManager,
     onToggleColor, onUpdateColor, onRemoveColor, onAddColor,
     onRemoveSize, onAddSize
 }: VariantPanelProps) {
@@ -393,19 +419,32 @@ function VariantPanel({
                             <span className="text-emerald-400 font-semibold text-sm">Plantillas Base (Imágenes)</span>
                         </div>
                         <div className="space-y-3 bg-black/20 p-4 rounded-xl border border-white/5">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            {/* Frontal */}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                                 <span className="text-slate-400 text-xs font-medium w-16">Frontal:</span>
-                                <input value={variant.assets?.front || ''} onChange={e => onUpdateAsset('front', e.target.value)}
-                                    placeholder="/images/custom_design_builder/tu_imagen.png"
-                                    className="flex-1 bg-black/50 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
+                                <div className="flex-1 flex items-center gap-2">
+                                    <input value={variant.assets?.front || ''} onChange={e => onUpdateAsset('front', e.target.value)}
+                                        placeholder="/images/custom_design_builder/tu_imagen.png"
+                                        className="flex-1 bg-black/50 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
+                                    <Button size="sm" variant="outline" onClick={() => onOpenAssetManager('front')}
+                                        className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 whitespace-nowrap">
+                                        🖼️ Elegir Capa
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            {/* Trasera */}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                                 <span className="text-slate-400 text-xs font-medium w-16">Trasera:</span>
-                                <input value={variant.assets?.back || ''} onChange={e => onUpdateAsset('back', e.target.value)}
-                                    placeholder="/images/custom_design_builder/tu_imagen_trasera.png"
-                                    className="flex-1 bg-black/50 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
+                                <div className="flex-1 flex items-center gap-2">
+                                    <input value={variant.assets?.back || ''} onChange={e => onUpdateAsset('back', e.target.value)}
+                                        placeholder="/images/custom_design_builder/tu_imagen_trasera.png"
+                                        className="flex-1 bg-black/50 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
+                                    <Button size="sm" variant="outline" onClick={() => onOpenAssetManager('back')}
+                                        className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 whitespace-nowrap">
+                                        🖼️ Elegir Capa
+                                    </Button>
+                                </div>
                             </div>
-                            <p className="text-[10px] text-slate-500 mt-2">La ruta relativa de la imagen base (con fondo transparente) subida en el servidor público.</p>
                         </div>
                     </div>
 
@@ -498,3 +537,140 @@ function VariantPanel({
         </div>
     );
 }
+
+// ─── Asset Manager Modal ─────────────────────────────────────────────────────
+
+interface AssetData {
+    name: string;
+    url: string;
+    size: number;
+    time: number;
+}
+
+function AssetManagerModal({ onClose, onSelect }: { onClose: () => void, onSelect: (url: string) => void }) {
+    const [assets, setAssets] = useState<AssetData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
+
+    const fetchAssets = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get('/api/builder-assets');
+            setAssets(res.data);
+        } catch (e) {
+            console.error("Error fetching assets", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAssets();
+    }, []);
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+        
+        // Size check (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('La imagen excede el límite de 2MB. Por favor optimízala.');
+            return;
+        }
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const res = await axios.post('/api/builder-assets', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            await fetchAssets();
+        } catch (error: any) {
+            console.error('Error uploading:', error);
+            alert(error.response?.data?.message || 'Error al subir la imagen');
+        } finally {
+            setUploading(false);
+            if (e.target) e.target.value = '';
+        }
+    };
+
+    const handleDelete = async (filename: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('¿Seguro que deseas eliminar esta imagen permanentemente del servidor?')) return;
+        
+        try {
+            await axios.delete(`/api/builder-assets/${filename}`);
+            await fetchAssets();
+        } catch (error) {
+            alert('Error al eliminar la imagen');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="w-full max-w-3xl bg-[#111] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+                
+                {/* Header */}
+                <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+                    <div>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <Image className="w-5 h-5 text-emerald-400" />
+                            Gestor de Plantillas Base
+                        </h2>
+                        <p className="text-slate-400 text-sm mt-1">Sube archivos transparentes (PNG/WebP). Límite 2MB.</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-white bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                    
+                    {/* Upload Zone */}
+                    <label className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-emerald-500/30 rounded-xl bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/50 transition-colors cursor-pointer group">
+                        <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            {uploading ? <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" /> : <UploadCloud className="w-6 h-6 text-emerald-400" />}
+                        </div>
+                        <p className="text-emerald-400 font-semibold">{uploading ? 'Subiendo...' : 'Haz clic para subir imagen'}</p>
+                        <p className="text-slate-500 text-xs mt-1">PNG, JPG o WebP (Max 2MB)</p>
+                        <input type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleUpload} disabled={uploading} />
+                    </label>
+
+                    {/* Grid */}
+                    {loading ? (
+                        <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 text-emerald-500 animate-spin" /></div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {assets.map((asset) => (
+                                <div key={asset.name} className="relative group bg-black/40 border border-white/10 rounded-xl overflow-hidden hover:border-emerald-500/50 transition-colors">
+                                    <div className="aspect-square p-2 flex items-center justify-center bg-[#f8f9fa] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZWVlIj48L3JlY3Q+CjxyZWN0IHg9IjQiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNlZWUiPjwvcmVjdD4KPC9zdmc+')]">
+                                        <img src={asset.url} alt={asset.name} className="w-full h-full object-contain" />
+                                    </div>
+                                    <div className="p-2 border-t border-white/5 space-y-2">
+                                        <p className="text-xs text-slate-300 font-mono truncate" title={asset.name}>{asset.name}</p>
+                                        <p className="text-[10px] text-slate-500">{(asset.size / 1024).toFixed(0)} KB</p>
+                                        <Button size="sm" className="w-full h-7 text-xs bg-emerald-600 hover:bg-emerald-500" onClick={() => onSelect(asset.url)}>
+                                            Elegir
+                                        </Button>
+                                    </div>
+                                    <button onClick={(e) => handleDelete(asset.name, e)} className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all backdrop-blur-md">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            ))}
+                            {assets.length === 0 && (
+                                <div className="col-span-full py-8 text-center text-slate-500 border border-white/5 rounded-xl border-dashed">
+                                    No hay imágenes subidas aún.
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
