@@ -85,6 +85,41 @@ export default function BuilderSettings({ config }: Props) {
     const updateProductPrice = (idx: number, price: number) =>
         setProducts(p => p.map((x, i) => i === idx ? { ...x, basePrice: price } : x));
 
+    const updateProductName = (idx: number, name: string) =>
+        setProducts(p => p.map((x, i) => i === idx ? { ...x, name } : x));
+
+    const updateProductId = (idx: number, id: string) =>
+        setProducts(p => p.map((x, i) => i === idx ? { ...x, id } : x));
+
+    const removeProduct = (idx: number) => {
+        if (window.confirm("¿Seguro que deseas eliminar esta prenda por completo?")) {
+            setProducts(p => p.filter((_, i) => i !== idx));
+        }
+    };
+
+    const addNewProduct = () => {
+        const newId = `nueva_prenda_${Date.now()}`;
+        const newProduct: ConfigProduct = {
+            id: newId,
+            name: "Nueva Prenda",
+            basePrice: 15,
+            enabled: true,
+            variants: {}
+        };
+        // Inicializar con todos los géneros disponibles apagados (el cliente los enciende)
+        (config.genders ?? ['Caballero', 'Dama']).forEach(g => {
+            newProduct.variants[g] = {
+                enabled: false,
+                assets: { front: '', back: '' },
+                colors: [],
+                sizes: []
+            };
+        });
+        
+        setProducts([...products, newProduct]);
+        setExpandedProducts(prev => new Set(prev).add(newId));
+    };
+
     // ── Variant helpers ────────────────────────────────────────────────────
     const updateVariant = (pIdx: number, gender: string, updater: (v: GenderVariant) => GenderVariant) =>
         setProducts(p => p.map((prod, i) => {
@@ -94,6 +129,12 @@ export default function BuilderSettings({ config }: Props) {
 
     const toggleVariant = (pIdx: number, gender: string) =>
         updateVariant(pIdx, gender, v => ({ ...v, enabled: !v.enabled }));
+
+    const updateAsset = (pIdx: number, gender: string, side: 'front' | 'back', url: string) =>
+        updateVariant(pIdx, gender, v => ({
+            ...v,
+            assets: { ...v.assets, [side]: url }
+        }));
 
     // ── Color helpers ──────────────────────────────────────────────────────
     const toggleColor = (pIdx: number, gender: string, cIdx: number) =>
@@ -187,7 +228,7 @@ export default function BuilderSettings({ config }: Props) {
                 {products.map((product, pIdx) => {
                     const isExpanded = expandedProducts.has(product.id);
                     return (
-                        <Card key={product.id} className={`bg-white/5 border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden transition-all ${!product.enabled ? 'opacity-50' : ''}`}>
+                        <Card key={`${product.id}-${pIdx}`} className={`bg-white/5 border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden transition-all ${!product.enabled ? 'opacity-50' : ''}`}>
 
                             {/* Product Header */}
                             <div className="flex items-center gap-3 p-5 cursor-pointer select-none border-b border-white/[0.06]"
@@ -195,19 +236,35 @@ export default function BuilderSettings({ config }: Props) {
                                 <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
                                     <Shirt className="w-5 h-5 text-slate-300" />
                                 </div>
-                                <div className="flex-1">
-                                    <p className="text-white font-bold">{product.name}</p>
-                                    <p className="text-slate-500 text-xs font-mono">{product.id}</p>
+                                <div className="flex-1" onClick={e => e.stopPropagation()}>
+                                    <input 
+                                        value={product.name}
+                                        onChange={e => updateProductName(pIdx, e.target.value)}
+                                        className="text-white font-bold bg-transparent border-b border-transparent hover:border-white/20 focus:border-emerald-500 focus:outline-none w-full max-w-[200px]"
+                                    />
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-slate-500 text-xs font-mono">ID:</span>
+                                        <input 
+                                            value={product.id}
+                                            onChange={e => updateProductId(pIdx, e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                                            className="text-slate-500 text-xs font-mono bg-transparent border-b border-transparent hover:border-white/20 focus:border-emerald-500 focus:outline-none flex-1 max-w-[150px]"
+                                        />
+                                    </div>
                                 </div>
                                 {/* Base price */}
-                                <div className="flex items-center gap-2 mr-4" onClick={e => e.stopPropagation()}>
-                                    <span className="text-slate-500 text-xs">Base:</span>
+                                <div className="flex items-center gap-2 mr-2" onClick={e => e.stopPropagation()}>
+                                    <span className="text-slate-500 text-xs hidden sm:inline">Base:</span>
                                     <input type="number" min="0" step="0.5" value={product.basePrice}
                                         onChange={e => updateProductPrice(pIdx, parseFloat(e.target.value) || 0)}
-                                        className="w-20 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-emerald-500"
+                                        className="w-16 sm:w-20 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-emerald-500"
                                     />
-                                    <span className="text-slate-500 text-xs">USD</span>
+                                    <span className="text-slate-500 text-xs hidden sm:inline">USD</span>
                                 </div>
+                                {/* Delete */}
+                                <button onClick={e => { e.stopPropagation(); removeProduct(pIdx); }}
+                                    className="text-red-400/60 hover:text-red-400 transition-colors mr-2 p-2 hover:bg-white/5 rounded-lg" title="Eliminar prenda">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
                                 {/* Enable toggle */}
                                 <button onClick={e => { e.stopPropagation(); toggleProduct(pIdx); }}
                                     className="text-slate-400 hover:text-white transition-colors" title={product.enabled ? 'Desactivar' : 'Activar'}>
@@ -215,12 +272,12 @@ export default function BuilderSettings({ config }: Props) {
                                         ? <ToggleRight className="w-6 h-6 text-emerald-400" />
                                         : <ToggleLeft className="w-6 h-6" />}
                                 </button>
-                                {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
+                                {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500 ml-2" /> : <ChevronRight className="w-4 h-4 text-slate-500 ml-2" />}
                             </div>
 
                             {/* Variants (genders) */}
                             {isExpanded && (
-                                <div className="p-4 space-y-3">
+                                <div className="p-4 space-y-4">
                                     {Object.entries(product.variants).map(([gender, variant]) => {
                                         const variantKey = `${product.id}-${gender}`;
                                         const isVariantExpanded = expandedVariants.has(variantKey);
@@ -233,6 +290,7 @@ export default function BuilderSettings({ config }: Props) {
                                                 isExpanded={isVariantExpanded}
                                                 onToggleExpand={() => toggleExpandVariant(variantKey)}
                                                 onToggleVariant={() => toggleVariant(pIdx, gender)}
+                                                onUpdateAsset={(side, url) => updateAsset(pIdx, gender, side, url)}
                                                 onToggleColor={(cIdx) => toggleColor(pIdx, gender, cIdx)}
                                                 onUpdateColor={(cIdx, field, val) => updateColor(pIdx, gender, cIdx, field, val)}
                                                 onRemoveColor={(cIdx) => removeColor(pIdx, gender, cIdx)}
@@ -248,10 +306,17 @@ export default function BuilderSettings({ config }: Props) {
                     );
                 })}
 
+                {/* Add Product Button */}
+                <Button onClick={addNewProduct} variant="outline" 
+                    className="w-full border-dashed border-white/20 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/50 py-8 rounded-2xl flex flex-col gap-2 h-auto">
+                    <Plus className="w-6 h-6" />
+                    <span>Agregar Nueva Prenda</span>
+                </Button>
+
                 {/* Footer Save */}
                 <div className="flex justify-end pt-2 pb-8">
                     <Button onClick={handleSave} disabled={saving}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-3 gap-2 text-base">
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-3 gap-2 text-base shadow-lg shadow-emerald-500/20">
                         <Save className="w-4 h-4" />
                         {saving ? 'Guardando...' : 'Guardar Toda la Configuración'}
                     </Button>
@@ -270,6 +335,7 @@ interface VariantPanelProps {
     isExpanded: boolean;
     onToggleExpand: () => void;
     onToggleVariant: () => void;
+    onUpdateAsset: (side: 'front' | 'back', url: string) => void;
     onToggleColor: (cIdx: number) => void;
     onUpdateColor: (cIdx: number, field: 'label' | 'value', val: string) => void;
     onRemoveColor: (cIdx: number) => void;
@@ -278,9 +344,11 @@ interface VariantPanelProps {
     onAddSize: (size: string) => void;
 }
 
+import { Image } from 'lucide-react';
+
 function VariantPanel({
     gender, variant, variantKey, isExpanded,
-    onToggleExpand, onToggleVariant,
+    onToggleExpand, onToggleVariant, onUpdateAsset,
     onToggleColor, onUpdateColor, onRemoveColor, onAddColor,
     onRemoveSize, onAddSize
 }: VariantPanelProps) {
@@ -300,23 +368,46 @@ function VariantPanel({
                 </div>
                 <span className="text-white font-semibold text-sm flex-1">{gender}</span>
 
-                <Badge className={`text-xs ${variant.enabled ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-white/5 text-slate-500 border-white/10'}`}>
-                    {activeColors} colores · {variant.sizes.length} tallas
+                <Badge className={`text-xs hidden sm:inline-flex ${variant.enabled ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-white/5 text-slate-500 border-white/10'}`}>
+                    {activeColors} color{activeColors !== 1 ? 'es' : ''} · {variant.sizes.length} talla{variant.sizes.length !== 1 ? 's' : ''}
                 </Badge>
 
                 {/* Enable toggle */}
                 <button onClick={e => { e.stopPropagation(); onToggleVariant(); }}
-                    className="text-slate-400 hover:text-white transition-colors" title={variant.enabled ? 'Desactivar género' : 'Activar género'}>
+                    className="text-slate-400 hover:text-white transition-colors ml-2" title={variant.enabled ? 'Desactivar género' : 'Activar género'}>
                     {variant.enabled
                         ? <ToggleRight className="w-5 h-5 text-emerald-400" />
                         : <ToggleLeft className="w-5 h-5" />}
                 </button>
-                {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-600" /> : <ChevronRight className="w-4 h-4 text-slate-600" />}
+                {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-600 ml-2" /> : <ChevronRight className="w-4 h-4 text-slate-600 ml-2" />}
             </div>
 
             {/* Expanded content */}
             {isExpanded && (
-                <div className="px-4 pb-4 space-y-5 border-t border-white/[0.06] pt-4">
+                <div className="px-4 pb-4 space-y-6 border-t border-white/[0.06] pt-5">
+
+                    {/* ASSETS */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <Image className="w-4 h-4 text-emerald-400" />
+                            <span className="text-emerald-400 font-semibold text-sm">Plantillas Base (Imágenes)</span>
+                        </div>
+                        <div className="space-y-3 bg-black/20 p-4 rounded-xl border border-white/5">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="text-slate-400 text-xs font-medium w-16">Frontal:</span>
+                                <input value={variant.assets?.front || ''} onChange={e => onUpdateAsset('front', e.target.value)}
+                                    placeholder="/images/custom_design_builder/tu_imagen.png"
+                                    className="flex-1 bg-black/50 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="text-slate-400 text-xs font-medium w-16">Trasera:</span>
+                                <input value={variant.assets?.back || ''} onChange={e => onUpdateAsset('back', e.target.value)}
+                                    placeholder="/images/custom_design_builder/tu_imagen_trasera.png"
+                                    className="flex-1 bg-black/50 border border-white/10 hover:border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
+                            </div>
+                            <p className="text-[10px] text-slate-500 mt-2">La ruta relativa de la imagen base (con fondo transparente) subida en el servidor público.</p>
+                        </div>
+                    </div>
 
                     {/* COLORS */}
                     <div>
