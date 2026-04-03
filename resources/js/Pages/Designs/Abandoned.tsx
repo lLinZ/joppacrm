@@ -74,10 +74,28 @@ export default function Abandoned({ abandonedDesigns }: { abandonedDesigns: any 
     };
 
     const [selectedPreview, setSelectedPreview] = React.useState<any>(null);
+    const [fonts, setFonts] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        // Fetch dynamic fonts configuration from CRM API
+        fetch('/api/builder-config')
+            .then(res => res.json())
+            .then(data => {
+                if (data.fonts) setFonts(data.fonts);
+            })
+            .catch(() => {});
+    }, []);
 
     return (
         <AppLayout>
             <Head title="Diseños Huérfanos" />
+            
+            {/* Dynamic Fonts Import */}
+            {fonts.length > 0 && (
+                <style dangerouslySetInnerHTML={{ __html: `
+                    @import url('https://fonts.googleapis.com/css2?${fonts.map(f => f.url ? `family=${f.url}` : '').filter(Boolean).join('&')}&display=swap');
+                `}} />
+            )}
 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold flex items-center gap-2">

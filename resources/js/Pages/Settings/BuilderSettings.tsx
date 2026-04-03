@@ -61,6 +61,8 @@ export default function BuilderSettings({ config }: Props) {
     const flash = props.flash ?? {};
 
     const [products, setProducts] = useState<ConfigProduct[]>(config.products ?? []);
+    const [fonts, setFonts] = useState<any[]>(config.fonts ?? []);
+    const [activeTab, setActiveTab] = useState<'products' | 'fonts'>('products');
     const [saving, setSaving] = useState(false);
     const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set([config.products?.[0]?.id].filter(Boolean)));
     const [expandedVariants, setExpandedVariants] = useState<Set<string>>(new Set());
@@ -85,12 +87,27 @@ export default function BuilderSettings({ config }: Props) {
         setSaving(true);
         router.post('/settings/builder', {
             products: JSON.parse(JSON.stringify(products)),
-            fonts: JSON.parse(JSON.stringify(config.fonts ?? [])),
+            fonts: JSON.parse(JSON.stringify(fonts)),
             genders: config.genders ?? ['Caballero', 'Dama'],
         }, {
             onFinish: () => setSaving(false),
             preserveScroll: true,
         });
+    };
+
+    // ── Fonts helpers ──────────────────────────────────────────────────────
+    const addFont = () => {
+        setFonts([...fonts, { label: 'Nueva Fuente', value: 'Arial, sans-serif', url: 'Muli' }]);
+    };
+    
+    const updateFont = (idx: number, field: string, value: string) => {
+        const newFonts = [...fonts];
+        newFonts[idx][field] = value;
+        setFonts(newFonts);
+    };
+
+    const removeFont = (idx: number) => {
+        setFonts(fonts.filter((_, i) => i !== idx));
     };
 
     // ── Product helpers ────────────────────────────────────────────────────
@@ -239,98 +256,185 @@ export default function BuilderSettings({ config }: Props) {
                     </div>
                 )}
 
-                {/* ── PRODUCTS ──────────────────────────────────────────────── */}
-                {products.map((product, pIdx) => {
-                    const isExpanded = expandedProducts.has(product.id);
-                    return (
-                        <Card key={`${product.id}-${pIdx}`} className={`bg-white/5 border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden transition-all ${!product.enabled ? 'opacity-50' : ''}`}>
+                {/* TABS */}
+                <div className="flex gap-4 border-b border-white/10 mt-6 mb-8">
+                    <button 
+                        onClick={() => setActiveTab('products')}
+                        className={`pb-3 px-2 font-medium text-sm transition-colors border-b-2 flex gap-2 items-center 
+                            ${activeTab === 'products' ? 'border-emerald-400 text-emerald-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+                    >
+                        <Shirt className="w-4 h-4" /> Prendas y Variantes
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('fonts')}
+                        className={`pb-3 px-2 font-medium text-sm transition-colors border-b-2 flex gap-2 items-center 
+                            ${activeTab === 'fonts' ? 'border-emerald-400 text-emerald-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+                    >
+                        <Palette className="w-4 h-4" /> Tipografías Web
+                    </button>
+                </div>
 
-                            {/* Product Header */}
-                            <div className="flex items-center gap-3 p-5 cursor-pointer select-none border-b border-white/[0.06]"
-                                onClick={() => toggleExpandProduct(product.id)}>
-                                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                                    <Shirt className="w-5 h-5 text-slate-300" />
-                                </div>
-                                <div className="flex-1" onClick={e => e.stopPropagation()}>
-                                    <input 
-                                        value={product.name}
-                                        onChange={e => updateProductName(pIdx, e.target.value)}
-                                        className="text-white font-bold bg-transparent border-b border-transparent hover:border-white/20 focus:border-emerald-500 focus:outline-none w-full max-w-[200px]"
-                                    />
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-slate-500 text-xs font-mono">ID:</span>
-                                        <input 
-                                            value={product.id}
-                                            onChange={e => updateProductId(pIdx, e.target.value.toLowerCase().replace(/\s+/g, '_'))}
-                                            className="text-slate-500 text-xs font-mono bg-transparent border-b border-transparent hover:border-white/20 focus:border-emerald-500 focus:outline-none flex-1 max-w-[150px]"
-                                        />
+                {/* ── PRODUCTS TAB ──────────────────────────────────────────────── */}
+                {activeTab === 'products' && (
+                    <div className="space-y-6">
+                        {products.map((product, pIdx) => {
+                            const isExpanded = expandedProducts.has(product.id);
+                            return (
+                                <Card key={`${product.id}-${pIdx}`} className={`bg-white/5 border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden transition-all ${!product.enabled ? 'opacity-50' : ''}`}>
+
+                                    {/* Product Header */}
+                                    <div className="flex items-center gap-3 p-5 cursor-pointer select-none border-b border-white/[0.06]"
+                                        onClick={() => toggleExpandProduct(product.id)}>
+                                        <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                                            <Shirt className="w-5 h-5 text-slate-300" />
+                                        </div>
+                                        <div className="flex-1" onClick={e => e.stopPropagation()}>
+                                            <input 
+                                                value={product.name}
+                                                onChange={e => updateProductName(pIdx, e.target.value)}
+                                                className="text-white font-bold bg-transparent border-b border-transparent hover:border-white/20 focus:border-emerald-500 focus:outline-none w-full max-w-[200px]"
+                                            />
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-slate-500 text-xs font-mono">ID:</span>
+                                                <input 
+                                                    value={product.id}
+                                                    onChange={e => updateProductId(pIdx, e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                                                    className="text-slate-500 text-xs font-mono bg-transparent border-b border-transparent hover:border-white/20 focus:border-emerald-500 focus:outline-none flex-1 max-w-[150px]"
+                                                />
+                                            </div>
+                                        </div>
+                                        {/* Base price */}
+                                        <div className="flex items-center gap-2 mr-2" onClick={e => e.stopPropagation()}>
+                                            <span className="text-slate-500 text-xs hidden sm:inline">Base:</span>
+                                            <input type="number" min="0" step="0.5" value={product.basePrice}
+                                                onChange={e => updateProductPrice(pIdx, parseFloat(e.target.value) || 0)}
+                                                className="w-16 sm:w-20 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-emerald-500"
+                                            />
+                                            <span className="text-slate-500 text-xs hidden sm:inline">USD</span>
+                                        </div>
+                                        {/* Delete */}
+                                        <button onClick={e => { e.stopPropagation(); removeProduct(pIdx); }}
+                                            className="text-red-400/60 hover:text-red-400 transition-colors mr-2 p-2 hover:bg-white/5 rounded-lg" title="Eliminar prenda">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        {/* Enable toggle */}
+                                        <button onClick={e => { e.stopPropagation(); toggleProduct(pIdx); }}
+                                            className="text-slate-400 hover:text-white transition-colors" title={product.enabled ? 'Desactivar' : 'Activar'}>
+                                            {product.enabled
+                                                ? <ToggleRight className="w-6 h-6 text-emerald-400" />
+                                                : <ToggleLeft className="w-6 h-6" />}
+                                        </button>
+                                        {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500 ml-2" /> : <ChevronRight className="w-4 h-4 text-slate-500 ml-2" />}
                                     </div>
+
+                                    {/* Variants (genders) */}
+                                    {isExpanded && (
+                                        <div className="p-4 space-y-4">
+                                            {Object.entries(product.variants).map(([gender, variant]) => {
+                                                const variantKey = `${product.id}-${gender}`;
+                                                const isVariantExpanded = expandedVariants.has(variantKey);
+                                                return (
+                                                    <VariantPanel
+                                                        key={gender}
+                                                        gender={gender}
+                                                        variant={variant}
+                                                        variantKey={variantKey}
+                                                        isExpanded={isVariantExpanded}
+                                                        onToggleExpand={() => toggleExpandVariant(variantKey)}
+                                                        onToggleVariant={() => toggleVariant(pIdx, gender)}
+                                                        onUpdateAsset={(side, url) => updateAsset(pIdx, gender, side, url)}
+                                                        onOpenAssetManager={(side) => openAssetManager(pIdx, gender, side)}
+                                                        onToggleColor={(cIdx) => toggleColor(pIdx, gender, cIdx)}
+                                                        onUpdateColor={(cIdx, field, val) => updateColor(pIdx, gender, cIdx, field, val)}
+                                                        onRemoveColor={(cIdx) => removeColor(pIdx, gender, cIdx)}
+                                                        onAddColor={(label, value) => addColor(pIdx, gender, label, value)}
+                                                        onRemoveSize={(size) => removeSize(pIdx, gender, size)}
+                                                        onAddSize={(size) => addSize(pIdx, gender, size)}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </Card>
+                            );
+                        })}
+
+                        {/* Add Product Button */}
+                        <Button onClick={addNewProduct} variant="outline" 
+                            className="w-full border-dashed border-white/20 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/50 py-8 rounded-2xl flex flex-col gap-2 h-auto">
+                            <Plus className="w-6 h-6" />
+                            <span>Agregar Nueva Prenda</span>
+                        </Button>
+                    </div>
+                )}
+
+                {/* ── FONTS TAB ──────────────────────────────────────────────── */}
+                {activeTab === 'fonts' && (
+                    <div className="space-y-6">
+                        <Card className="bg-white/5 border-white/10 backdrop-blur-xl rounded-2xl p-6">
+                            <div className="mb-6 flex items-start gap-4">
+                                <div className="p-3 bg-purple-500/10 rounded-xl">
+                                    <Palette className="w-6 h-6 text-purple-400" />
                                 </div>
-                                {/* Base price */}
-                                <div className="flex items-center gap-2 mr-2" onClick={e => e.stopPropagation()}>
-                                    <span className="text-slate-500 text-xs hidden sm:inline">Base:</span>
-                                    <input type="number" min="0" step="0.5" value={product.basePrice}
-                                        onChange={e => updateProductPrice(pIdx, parseFloat(e.target.value) || 0)}
-                                        className="w-16 sm:w-20 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-white text-sm text-center focus:outline-none focus:border-emerald-500"
-                                    />
-                                    <span className="text-slate-500 text-xs hidden sm:inline">USD</span>
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">Google Fonts Integradas</h2>
+                                    <p className="text-slate-400 text-sm mt-1 max-w-2xl">
+                                        Escribe exactamente el fragmento de la URL que provee Google Fonts para inyectarlo en el E-commerce dinámicamente.
+                                        Por ejemplo, para <code>Roboto:wght@400;700</code> usa ese texto exacto como URL de Fuente.
+                                    </p>
                                 </div>
-                                {/* Delete */}
-                                <button onClick={e => { e.stopPropagation(); removeProduct(pIdx); }}
-                                    className="text-red-400/60 hover:text-red-400 transition-colors mr-2 p-2 hover:bg-white/5 rounded-lg" title="Eliminar prenda">
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                                {/* Enable toggle */}
-                                <button onClick={e => { e.stopPropagation(); toggleProduct(pIdx); }}
-                                    className="text-slate-400 hover:text-white transition-colors" title={product.enabled ? 'Desactivar' : 'Activar'}>
-                                    {product.enabled
-                                        ? <ToggleRight className="w-6 h-6 text-emerald-400" />
-                                        : <ToggleLeft className="w-6 h-6" />}
-                                </button>
-                                {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500 ml-2" /> : <ChevronRight className="w-4 h-4 text-slate-500 ml-2" />}
                             </div>
 
-                            {/* Variants (genders) */}
-                            {isExpanded && (
-                                <div className="p-4 space-y-4">
-                                    {Object.entries(product.variants).map(([gender, variant]) => {
-                                        const variantKey = `${product.id}-${gender}`;
-                                        const isVariantExpanded = expandedVariants.has(variantKey);
-                                        return (
-                                            <VariantPanel
-                                                key={gender}
-                                                gender={gender}
-                                                variant={variant}
-                                                variantKey={variantKey}
-                                                isExpanded={isVariantExpanded}
-                                                onToggleExpand={() => toggleExpandVariant(variantKey)}
-                                                onToggleVariant={() => toggleVariant(pIdx, gender)}
-                                                onUpdateAsset={(side, url) => updateAsset(pIdx, gender, side, url)}
-                                                onOpenAssetManager={(side) => openAssetManager(pIdx, gender, side)}
-                                                onToggleColor={(cIdx) => toggleColor(pIdx, gender, cIdx)}
-                                                onUpdateColor={(cIdx, field, val) => updateColor(pIdx, gender, cIdx, field, val)}
-                                                onRemoveColor={(cIdx) => removeColor(pIdx, gender, cIdx)}
-                                                onAddColor={(label, value) => addColor(pIdx, gender, label, value)}
-                                                onRemoveSize={(size) => removeSize(pIdx, gender, size)}
-                                                onAddSize={(size) => addSize(pIdx, gender, size)}
+                            <div className="space-y-4">
+                                {fonts.map((font, idx) => (
+                                    <div key={idx} className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-black/40 border border-white/5 p-4 rounded-xl">
+                                        
+                                        <div className="flex-1 w-full space-y-1">
+                                            <label className="text-xs text-slate-500 font-bold uppercase">Nombre para Mostrar</label>
+                                            <input 
+                                                value={font.label} onChange={(e) => updateFont(idx, 'label', e.target.value)}
+                                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-emerald-500 focus:outline-none"
                                             />
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </Card>
-                    );
-                })}
+                                        </div>
 
-                {/* Add Product Button */}
-                <Button onClick={addNewProduct} variant="outline" 
-                    className="w-full border-dashed border-white/20 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/50 py-8 rounded-2xl flex flex-col gap-2 h-auto">
-                    <Plus className="w-6 h-6" />
-                    <span>Agregar Nueva Prenda</span>
-                </Button>
+                                        <div className="flex-1 w-full space-y-1">
+                                            <label className="text-xs text-slate-500 font-bold uppercase">Valor CSS (font-family)</label>
+                                            <input 
+                                                value={font.value} onChange={(e) => updateFont(idx, 'value', e.target.value)}
+                                                placeholder="Ej: 'Bebas Neue', sans-serif"
+                                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        <div className="flex-1 w-full space-y-1">
+                                            <label className="text-xs text-slate-500 font-bold uppercase flex gap-1 items-center">
+                                                URL de Google Fonts <span title="Ejemplo: Montserrat:wght@400;700;900" className="w-4 h-4 bg-slate-700 text-white rounded-full flex items-center justify-center text-[10px] cursor-help">?</span>
+                                            </label>
+                                            <input 
+                                                value={font.url} onChange={(e) => updateFont(idx, 'url', e.target.value)}
+                                                placeholder="Ej: Roboto:wght@400;700"
+                                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono focus:border-emerald-500 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        <div className="sm:self-end sm:mb-1">
+                                            <button onClick={() => removeFont(idx)} className="p-2.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <Button onClick={addFont} variant="outline" className="w-full border-dashed border-white/10 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/50">
+                                    <Plus className="w-4 h-4 mr-2" /> Agregar Nueva Tipografía
+                                </Button>
+                            </div>
+                        </Card>
+                    </div>
+                )}
 
                 {/* Footer Save */}
-                <div className="flex justify-end pt-2 pb-8">
+                <div className="flex justify-end pt-2 pb-8 mt-6">
                     <Button onClick={handleSave} disabled={saving}
                         className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-3 gap-2 text-base shadow-lg shadow-emerald-500/20">
                         <Save className="w-4 h-4" />

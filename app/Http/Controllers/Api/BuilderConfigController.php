@@ -214,6 +214,24 @@ class BuilderConfigController extends Controller
         $content = Storage::disk('local')->get($this->configPath);
         // Strip UTF-8 BOM if present (common when file is written by Windows tools)
         $content = ltrim($content, "\xef\xbb\xbf");
-        return json_decode($content, true) ?? [];
+        $data = json_decode($content, true) ?? [];
+
+        // Backwards compatibility for fonts block
+        if (!isset($data['fonts']) || empty($data['fonts'])) {
+            $data['fonts'] = [
+                ['label' => 'Montserrat',       'value' => 'Montserrat, sans-serif',      'url' => 'Montserrat:wght@400;700;900'],
+                ['label' => 'Bebas Neue',       'value' => "'Bebas Neue', sans-serif",    'url' => 'Bebas+Neue'],
+                ['label' => 'Caveat',           'value' => 'Caveat, cursive',             'url' => 'Caveat:wght@400;700'],
+                ['label' => 'Playfair Display', 'value' => 'Playfair Display, serif',     'url' => 'Playfair+Display:wght@400;700'],
+            ];
+        } else {
+            foreach ($data['fonts'] as $i => $font) {
+                if (!isset($font['url'])) {
+                    $data['fonts'][$i]['url'] = str_replace(' ', '+', $font['label']);
+                }
+            }
+        }
+
+        return $data;
     }
 }
