@@ -18,6 +18,14 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
     const [activeTab, setActiveTab] = useState<'crm' | 'history'>('crm');
     const [fullOrder, setFullOrder] = useState<any>(order);
     const [loading, setLoading] = useState(false);
+    const [showCostForm, setShowCostForm] = useState(false);
+    const [costs, setCosts] = useState({
+        base_cost: 0,
+        print_cost: 0,
+        logistics_cost: 0,
+        delivery_cost: 0,
+        other_costs: 0,
+    });
 
     // Fetch full order data when modal opens
     useEffect(() => {
@@ -35,9 +43,25 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
     }, [isOpen, order]);
 
     const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        router.post(route('orders.updateStatus', order.id), { status: e.target.value }, {
+        const val = e.target.value;
+        if (val === 'delivered') {
+            setShowCostForm(true);
+        } else {
+            router.post(route('orders.updateStatus', order.id), { status: val }, {
+                preserveScroll: true,
+                onSuccess: () => reloadFullOrder(),
+            });
+        }
+    };
+
+    const submitCosts = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.post(route('orders.complete', order.id), costs, {
             preserveScroll: true,
-            onSuccess: () => reloadFullOrder(),
+            onSuccess: () => {
+                setShowCostForm(false);
+                reloadFullOrder();
+            }
         });
     };
 
@@ -248,6 +272,46 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
                                 </div>
                             </div>
                         </section>
+
+                        {fullOrder.costs && (
+                            <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
+                                <h3 className="font-semibold text-foreground flex items-center gap-2 border-b border-border pb-3 mb-4">
+                                    <Activity className="h-5 w-5 text-emerald-500" /> Rentabilidad de la Venta
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Ingreso (Venta)</span>
+                                        <span className="font-medium">${Number(fullOrder.costs.revenue).toLocaleString('es-AR')}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Prenda Base</span>
+                                        <span className="text-red-500">-${Number(fullOrder.costs.base_cost).toLocaleString('es-AR')}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">DTF / Estampado</span>
+                                        <span className="text-red-500">-${Number(fullOrder.costs.print_cost).toLocaleString('es-AR')}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Logística / Transporte</span>
+                                        <span className="text-red-500">-${Number(fullOrder.costs.logistics_cost).toLocaleString('es-AR')}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Delivery</span>
+                                        <span className="text-red-500">-${Number(fullOrder.costs.delivery_cost).toLocaleString('es-AR')}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Otros Gastos</span>
+                                        <span className="text-red-500">-${Number(fullOrder.costs.other_costs).toLocaleString('es-AR')}</span>
+                                    </div>
+                                    <div className="pt-3 mt-3 border-t border-border flex justify-between items-center text-base font-bold">
+                                        <span>Ganancia Neta</span>
+                                        <span className={`${Number(fullOrder.costs.net_profit) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                            ${Number(fullOrder.costs.net_profit).toLocaleString('es-AR')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
                     </div>
 
                     {/* Right Column: CRM Actions (Calls & Comments) & History */}
@@ -362,6 +426,43 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
                     </div>
                 </div>
             </DialogContent>
+
+            {/* Cost Breakdown Dialog that triggers on delivered status change */}
+            <Dialog open={showCostForm} onOpenChange={setShowCostForm}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Desglose de Costos de la Orden</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={submitCosts} className="space-y-4 mt-2">
+                        <div className="space-y-2 text-sm">
+                            <p className="text-muted-foreground text-xs pb-2 border-b border-border">Ingresa los costos exactos asociados a esta orden para calcular la rentabilidad real y descontar inventario.</p>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground">Costo Prenda Base ($)</label>
+                            <input type="number" step="0.01" min="0" className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:ring-primary focus:border-primary" value={costs.base_cost} onChange={e => setCosts({...costs, base_cost: parseFloat(e.target.value) || 0})} required />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground">Costo de Estampado / DTF ($)</label>
+                            <input type="number" step="0.01" min="0" className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:ring-primary focus:border-primary" value={costs.print_cost} onChange={e => setCosts({...costs, print_cost: parseFloat(e.target.value) || 0})} required />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground">Viáticos / Pasajes ($)</label>
+                            <input type="number" step="0.01" min="0" className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:ring-primary focus:border-primary" value={costs.logistics_cost} onChange={e => setCosts({...costs, logistics_cost: parseFloat(e.target.value) || 0})} required />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground">Costo Delivery a Terceros ($)</label>
+                            <input type="number" step="0.01" min="0" className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:ring-primary focus:border-primary" value={costs.delivery_cost} onChange={e => setCosts({...costs, delivery_cost: parseFloat(e.target.value) || 0})} required />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-muted-foreground">Otros (Empaque, etc) ($)</label>
+                            <input type="number" step="0.01" min="0" className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:ring-primary focus:border-primary" value={costs.other_costs} onChange={e => setCosts({...costs, other_costs: parseFloat(e.target.value) || 0})} required />
+                        </div>
+                        <div className="pt-2 border-t border-border mt-2">
+                            <Button type="submit" className="w-full">Registrar Entrega y Costos</Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </Dialog>
     );
 }

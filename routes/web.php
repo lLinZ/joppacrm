@@ -33,10 +33,13 @@ Route::middleware('auth')->group(function () {
     Route::resource('exchange-rates', \App\Http\Controllers\ExchangeRateController::class);
     Route::resource('orders', \App\Http\Controllers\OrderController::class)->only(['index', 'show']);
     Route::post('orders/{order}/status', [\App\Http\Controllers\OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::post('orders/{order}/complete', [\App\Http\Controllers\OrderController::class, 'complete'])->name('orders.complete');
     Route::post('orders/{order}/assign', [\App\Http\Controllers\OrderController::class, 'assign'])->name('orders.assign');
     Route::post('orders/{order}/call', [\App\Http\Controllers\OrderController::class, 'incrementCall'])->name('orders.incrementCall');
     Route::post('orders/{order}/comments', [\App\Http\Controllers\OrderController::class, 'storeComment'])->name('orders.comments.store');
     
+    Route::get('/finance', [\App\Http\Controllers\FinanceController::class, 'index'])->name('finance.index');
+
     Route::post('design-requests/{design_request}/convert-to-order', [\App\Http\Controllers\DesignRequestController::class, 'convertToOrder'])->name('design-requests.convertToOrder');
     Route::post('design-requests/{design_request}/comments', [\App\Http\Controllers\DesignRequestController::class, 'storeComment'])->name('design-requests.comments.store');
     Route::resource('design-requests', \App\Http\Controllers\DesignRequestController::class)->only(['index', 'show', 'update']);

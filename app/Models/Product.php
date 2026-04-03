@@ -52,4 +52,9 @@ class Product extends Model
     {
         return $this->belongsToMany(Collection::class);
     }
+
+    public function movements()
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
 }

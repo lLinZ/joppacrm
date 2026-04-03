@@ -37,4 +37,9 @@ class Order extends Model
     {
         return $this->hasMany(OrderActivity::class);
     }
+
+    public function costs()
+    {
+        return $this->hasOne(OrderCost::class);
+    }
 }

@@ -46,7 +46,7 @@ class OrderController extends Controller
      */
     public function show(Order $order)
     {
-        $order->load(['items.catalogProduct.inventoryProduct', 'assignedUser', 'comments.user', 'activities.user']);
+        $order->load(['items.catalogProduct.inventoryProduct', 'assignedUser', 'comments.user', 'activities.user', 'costs']);
         
         // Sort activities by most recent inside the array if needed, or rely on relationship sort
         $order->setRelation('activities', $order->activities->sortByDesc('created_at')->values());
@@ -56,9 +56,6 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Update the status of the order.
-     */
     public function updateStatus(Request $request, Order $order)
     {
         $validated = $request->validate([
@@ -77,11 +74,109 @@ class OrderController extends Controller
                 'new_value' => $validated['status'],
                 'description' => 'Cambió el status de la orden'
             ]);
+
+            // Revert inventory if order was delivered and now is not
+            if ($oldStatus === 'entregado' && $validated['status'] !== 'entregado') {
+                foreach ($order->items as $item) {
+                    if ($item->catalogProduct && $item->catalogProduct->inventoryProduct) {
+                        $invProduct = $item->catalogProduct->inventoryProduct;
+                        $qty = $item->quantity;
+                        $invProduct->increment('quantity', $qty);
+                        
+                        $size = strtolower($item->size);
+                        if (in_array($size, ['s', 'small'])) $invProduct->increment('size_s', $qty);
+                        if (in_array($size, ['m', 'medium'])) $invProduct->increment('size_m', $qty);
+                        if (in_array($size, ['l', 'large'])) $invProduct->increment('size_l', $qty);
+
+                        \App\Models\InventoryMovement::create([
+                            'product_id' => $invProduct->id,
+                            'quantity' => $qty,
+                            'type' => 'restock',
+                            'size' => $item->size,
+                            'reference_id' => $order->id,
+                            'notes' => 'Status revertido (Orden #' . $order->id . ')',
+                        ]);
+                    }
+                }
+            }
         }
 
         broadcast(new OrderUpdated($order->fresh()))->toOthers();
 
         return redirect()->back()->with('success', 'Status de la orden actualizado.');
+    }
+
+    /**
+     * Complete the order by providing cost breakdown.
+     */
+    public function complete(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'base_cost' => 'required|numeric|min:0',
+            'print_cost' => 'required|numeric|min:0',
+            'logistics_cost' => 'required|numeric|min:0',
+            'delivery_cost' => 'required|numeric|min:0',
+            'other_costs' => 'required|numeric|min:0',
+        ]);
+
+        $total_cost = $validated['base_cost'] + $validated['print_cost'] + $validated['logistics_cost'] + $validated['delivery_cost'] + $validated['other_costs'];
+        $revenue = $order->total_amount;
+        $net_profit = $revenue - $total_cost;
+
+        $order->costs()->updateOrCreate(
+            ['order_id' => $order->id],
+            [
+                'revenue' => $revenue,
+                'base_cost' => $validated['base_cost'],
+                'print_cost' => $validated['print_cost'],
+                'logistics_cost' => $validated['logistics_cost'],
+                'delivery_cost' => $validated['delivery_cost'],
+                'other_costs' => $validated['other_costs'],
+                'total_cost' => $total_cost,
+                'net_profit' => $net_profit,
+            ]
+        );
+
+        $oldStatus = $order->status;
+        if ($oldStatus !== 'entregado') {
+            $order->update(['status' => 'entregado']);
+
+            \App\Models\OrderActivity::create([
+                'order_id' => $order->id,
+                'user_id' => auth()->id(),
+                'action' => 'status_changed',
+                'old_value' => $oldStatus,
+                'new_value' => 'entregado',
+                'description' => 'Orden completada con registro de costos'
+            ]);
+
+            foreach ($order->items as $item) {
+                if ($item->catalogProduct && $item->catalogProduct->inventoryProduct) {
+                    $invProduct = $item->catalogProduct->inventoryProduct;
+                    $qtyToDeduct = $item->quantity;
+
+                    $invProduct->decrement('quantity', $qtyToDeduct);
+                    
+                    $size = strtolower($item->size);
+                    if (in_array($size, ['s', 'small'])) $invProduct->decrement('size_s', $qtyToDeduct);
+                    if (in_array($size, ['m', 'medium'])) $invProduct->decrement('size_m', $qtyToDeduct);
+                    if (in_array($size, ['l', 'large'])) $invProduct->decrement('size_l', $qtyToDeduct);
+
+                    \App\Models\InventoryMovement::create([
+                        'product_id' => $invProduct->id,
+                        'quantity' => -$qtyToDeduct,
+                        'type' => 'sale',
+                        'size' => $item->size,
+                        'reference_id' => $order->id,
+                        'notes' => 'Venta despachada (Orden #' . $order->id . ')',
+                    ]);
+                }
+            }
+        }
+
+        broadcast(new OrderUpdated($order->fresh()))->toOthers();
+
+        return redirect()->back()->with('success', 'Orden completada y costos registrados.');
     }
 
     /**
