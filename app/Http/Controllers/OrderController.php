@@ -76,7 +76,7 @@ class OrderController extends Controller
             ]);
 
             // Revert inventory if order was delivered and now is not
-            if ($oldStatus === 'entregado' && $validated['status'] !== 'entregado') {
+            if ($oldStatus === 'delivered' && $validated['status'] !== 'delivered') {
                 foreach ($order->items as $item) {
                     if ($item->catalogProduct && $item->catalogProduct->inventoryProduct) {
                         $invProduct = $item->catalogProduct->inventoryProduct;
@@ -138,15 +138,15 @@ class OrderController extends Controller
         );
 
         $oldStatus = $order->status;
-        if ($oldStatus !== 'entregado') {
-            $order->update(['status' => 'entregado']);
+        if ($oldStatus !== 'delivered') {
+            $order->update(['status' => 'delivered']);
 
             \App\Models\OrderActivity::create([
                 'order_id' => $order->id,
                 'user_id' => auth()->id(),
                 'action' => 'status_changed',
                 'old_value' => $oldStatus,
-                'new_value' => 'entregado',
+                'new_value' => 'delivered',
                 'description' => 'Orden completada con registro de costos'
             ]);
 
