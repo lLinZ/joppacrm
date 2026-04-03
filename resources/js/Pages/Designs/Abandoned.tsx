@@ -64,6 +64,15 @@ export default function Abandoned({ abandonedDesigns }: { abandonedDesigns: any 
         }
     };
 
+    const getGarmentImage = (product: any, side: 'front'|'back') => {
+        if (!product || !product.assets) return '';
+        try {
+            const firstVariant = Object.values(product.assets)[0] as any;
+            if (firstVariant && firstVariant[side]) return firstVariant[side];
+        } catch (e) {}
+        return '';
+    };
+
     const [selectedPreview, setSelectedPreview] = React.useState<any>(null);
 
     return (
@@ -179,37 +188,105 @@ export default function Abandoned({ abandonedDesigns }: { abandonedDesigns: any 
                                 )}
                             </div>
 
-                            <div className="border border-white/5 rounded-xl bg-black/40 p-1">
+                            {/* VISUAL & LIST GRID */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {['front', 'back'].map(side => {
                                     const sideData = selectedPreview.elementsMap ? selectedPreview.elementsMap[side] : (selectedPreview.elements ? selectedPreview.elements[side] : []);
                                     if (!sideData || sideData.length === 0) return null;
                                     
+                                    const garmentImage = getGarmentImage(selectedPreview.product, side as 'front'|'back');
+                                    
                                     return (
-                                        <div key={side} className="p-4">
-                                            <h3 className="text-sm font-bold text-slate-300 uppercase mb-3 px-2 border-l-2 border-purple-500">
-                                                Capa: {side === 'front' ? 'FRENNTE' : 'TRASERA'} ({sideData.length} elementos)
+                                        <div key={side} className="space-y-4 border border-white/5 rounded-xl bg-black/40 p-4">
+                                            <h3 className="text-sm font-bold text-slate-300 uppercase px-2 border-l-2 border-purple-500">
+                                                Capa: {side === 'front' ? 'FRONTAL' : 'TRASERA'} ({sideData.length} lemenetos)
                                             </h3>
-                                            <div className="space-y-3">
+
+                                            {/* VISUAL MOCKUP CANVAS */}
+                                            <div className="relative w-full aspect-[1000/1100] bg-white rounded-lg overflow-hidden border border-white/20" style={{ containerType: 'inline-size' }}>
+                                                {/* Base Garment Image */}
+                                                {garmentImage && (
+                                                    <>
+                                                        <img src={garmentImage} alt="Base" className="absolute inset-0 w-full h-full object-contain object-top" />
+                                                        {selectedPreview.color && (
+                                                            <div className="absolute inset-0 w-full h-full opacity-90 transition-colors duration-500 bg-blend-multiply" style={{
+                                                                backgroundColor: selectedPreview.color,
+                                                                maskImage: `url(${garmentImage})`, maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'top center',
+                                                                WebkitMaskImage: `url(${garmentImage})`, WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'top center',
+                                                                mixBlendMode: 'multiply'
+                                                            }} />
+                                                        )}
+                                                        <img src={garmentImage} alt="Texture" className="absolute inset-0 w-full h-full object-contain object-top opacity-90 pointer-events-none mix-blend-multiply" style={{ filter: 'brightness(1.1) contrast(1.1)' }} />
+                                                    </>
+                                                )}
+
+                                                {/* Render Elements mathematically */}
+                                                <div className="absolute inset-0 z-10">
+                                                    {sideData.map((el: any) => {
+                                                        const leftPct = (el.x / 1000) * 100;
+                                                        const topPct = (el.y / 1100) * 100;
+                                                        const widthPct = (el.width / 1000) * 100;
+                                                        const heightPct = (el.height / 1100) * 100;
+                                                        
+                                                        return (
+                                                            <div key={el.id} className="absolute flex items-center justify-center transform origin-center" 
+                                                                style={{
+                                                                    left: `${leftPct}%`,
+                                                                    top: `${topPct}%`,
+                                                                    width: `${widthPct}%`,
+                                                                    height: `${heightPct}%`,
+                                                                    rotate: `${el.rotation || 0}deg`,
+                                                                }}
+                                                            >
+                                                                {el.type === 'image' ? (
+                                                                    <img src={el.content} className="w-full h-full object-contain pointer-events-none" />
+                                                                ) : (
+                                                                    <div style={{
+                                                                        color: el.color,
+                                                                        fontFamily: el.fontFamily?.split(',')[0] || 'Arial',
+                                                                        fontSize: `${el.fontSize}cqw`, // Using container query units as a responsive trick
+                                                                        letterSpacing: `${el.letterSpacing || 0}cqw`,
+                                                                        fontWeight: 'bold',
+                                                                        textAlign: 'center',
+                                                                        lineHeight: 1.1,
+                                                                        width: '100%',
+                                                                        height: '100%',
+                                                                        whiteSpace: 'pre-wrap',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                    }}>
+                                                                        {el.content}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            {/* LIST DETAILS */}
+                                            <div className="space-y-3 mt-4">
                                                 {sideData.map((el: any) => (
                                                     <div key={el.id} className="flex gap-4 items-center bg-white/[0.02] border border-white/5 rounded-lg p-3">
                                                         {el.type === 'text' ? (
                                                             <>
-                                                                <div className="w-12 h-12 flex items-center justify-center bg-blue-500/10 text-blue-400 rounded-md font-bold shrink-0">Aa</div>
+                                                                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 text-blue-400 rounded-md font-bold shrink-0">Aa</div>
                                                                 <div>
                                                                     <p className="text-sm font-semibold text-white">"{el.content}"</p>
-                                                                    <p className="text-xs text-slate-400 font-mono mt-1">
-                                                                        {el.fontFamily.split(',')[0]} · Size: {el.fontSize} · Color: {el.color}
+                                                                    <p className="text-[10px] text-slate-400 font-mono mt-1">
+                                                                        {el.fontFamily?.split(',')[0]} · Size: {el.fontSize} · Color: {el.color}
                                                                     </p>
                                                                 </div>
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <div className="w-12 h-12 flex items-center justify-center bg-emerald-500/10 rounded-md shrink-0 p-1">
+                                                                <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/10 rounded-md shrink-0 p-1">
                                                                     <img src={el.content} className="w-full h-full object-contain" />
                                                                 </div>
                                                                 <div className="overflow-hidden">
                                                                     <p className="text-sm font-semibold text-white">Imagen subida</p>
-                                                                    <a href={el.content} target="_blank" className="text-xs text-emerald-400 hover:underline truncate block mt-1">
+                                                                    <a href={el.content} target="_blank" className="text-[10px] text-emerald-400 hover:underline truncate block mt-1">
                                                                         {el.content}
                                                                     </a>
                                                                 </div>
