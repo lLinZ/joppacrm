@@ -2,7 +2,7 @@ import React from 'react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { Head, router } from '@inertiajs/react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/Components/ui/card";
-import { Ghost, Clock, Trash2, MapPin, Layers } from 'lucide-react';
+import { Ghost, Clock, Trash2, MapPin, Layers, X, Shirt } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 
 interface AbandonedDesign {
@@ -40,11 +40,31 @@ export default function Abandoned({ abandonedDesigns }: { abandonedDesigns: any 
         if (!designData) return 0;
         try {
             const data = typeof designData === 'string' ? JSON.parse(designData) : designData;
-            return data.objects?.length || 0;
+            let count = 0;
+            if (data.elementsMap) {
+                if (Array.isArray(data.elementsMap.front)) count += data.elementsMap.front.length;
+                if (Array.isArray(data.elementsMap.back)) count += data.elementsMap.back.length;
+            } else if (data.elements) { // Some old structure fallback
+                if (Array.isArray(data.elements.front)) count += data.elements.front.length;
+                if (Array.isArray(data.elements.back)) count += data.elements.back.length;
+            }
+            return count;
         } catch (e) {
             return 0;
         }
     };
+
+    const getPreviewDetails = (designData: any) => {
+        if (!designData) return null;
+        try {
+            const data = typeof designData === 'string' ? JSON.parse(designData) : designData;
+            return data;
+        } catch (e) {
+            return null;
+        }
+    };
+
+    const [selectedPreview, setSelectedPreview] = React.useState<any>(null);
 
     return (
         <AppLayout>
@@ -106,8 +126,8 @@ export default function Abandoned({ abandonedDesigns }: { abandonedDesigns: any 
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Button variant="outline" size="sm" className="bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20" onClick={() => alert('Pronto podrás lanzar este JSON directo a previsualización')}>
-                                                        Ver Lienzo
+                                                    <Button variant="outline" size="sm" className="bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20" onClick={() => setSelectedPreview(getPreviewDetails(design.design_data))}>
+                                                        Ver Elementos
                                                     </Button>
                                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(design.id)} className="text-slate-500 hover:text-red-400 hover:bg-red-500/10">
                                                         <Trash2 className="w-4 h-4" />
@@ -122,6 +142,91 @@ export default function Abandoned({ abandonedDesigns }: { abandonedDesigns: any 
                     </div>
                 </CardContent>
             </Card>
+
+            {/* PREVIEW MODAL */}
+            {selectedPreview && (
+                <div className="fixed inset-0 z-50 flex justify-center items-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="w-full max-w-2xl bg-[#111] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+                        
+                        <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Shirt className="w-5 h-5 text-purple-400" />
+                                Inspección Rápida de Diseño
+                            </h2>
+                            <button onClick={() => setSelectedPreview(null)} className="p-2 text-slate-400 hover:text-white bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            
+                            {/* DETAILS */}
+                            <div className="flex flex-wrap gap-4">
+                                {selectedPreview.product && (
+                                    <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex-1 min-w-[200px]">
+                                        <p className="text-xs text-slate-400 mb-1 uppercase font-bold">Variante Elegida</p>
+                                        <p className="font-semibold text-white">{selectedPreview.product.name}</p>
+                                    </div>
+                                )}
+                                {selectedPreview.color && (
+                                    <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex-1 min-w-[150px]">
+                                        <p className="text-xs text-slate-400 mb-1 uppercase font-bold">Color del Fondo</p>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-md shadow-inner border border-white/10" style={{ backgroundColor: selectedPreview.color }}></div>
+                                            <span className="font-mono text-sm text-white">{selectedPreview.color}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="border border-white/5 rounded-xl bg-black/40 p-1">
+                                {['front', 'back'].map(side => {
+                                    const sideData = selectedPreview.elementsMap ? selectedPreview.elementsMap[side] : (selectedPreview.elements ? selectedPreview.elements[side] : []);
+                                    if (!sideData || sideData.length === 0) return null;
+                                    
+                                    return (
+                                        <div key={side} className="p-4">
+                                            <h3 className="text-sm font-bold text-slate-300 uppercase mb-3 px-2 border-l-2 border-purple-500">
+                                                Capa: {side === 'front' ? 'FRENNTE' : 'TRASERA'} ({sideData.length} elementos)
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {sideData.map((el: any) => (
+                                                    <div key={el.id} className="flex gap-4 items-center bg-white/[0.02] border border-white/5 rounded-lg p-3">
+                                                        {el.type === 'text' ? (
+                                                            <>
+                                                                <div className="w-12 h-12 flex items-center justify-center bg-blue-500/10 text-blue-400 rounded-md font-bold shrink-0">Aa</div>
+                                                                <div>
+                                                                    <p className="text-sm font-semibold text-white">"{el.content}"</p>
+                                                                    <p className="text-xs text-slate-400 font-mono mt-1">
+                                                                        {el.fontFamily.split(',')[0]} · Size: {el.fontSize} · Color: {el.color}
+                                                                    </p>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <div className="w-12 h-12 flex items-center justify-center bg-emerald-500/10 rounded-md shrink-0 p-1">
+                                                                    <img src={el.content} className="w-full h-full object-contain" />
+                                                                </div>
+                                                                <div className="overflow-hidden">
+                                                                    <p className="text-sm font-semibold text-white">Imagen subida</p>
+                                                                    <a href={el.content} target="_blank" className="text-xs text-emerald-400 hover:underline truncate block mt-1">
+                                                                        {el.content}
+                                                                    </a>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }
