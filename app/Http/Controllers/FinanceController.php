@@ -15,10 +15,10 @@ class FinanceController extends Controller
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        // Get costs for orders within the date range
-        $costs = OrderCost::with('order.items')->whereHas('order', function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        })->get();
+        // Get costs that were registered within the date range
+        $costs = OrderCost::with('order.items')
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->get();
 
         $metrics = [
             'revenue' => collect($costs)->sum('revenue'),
