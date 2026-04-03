@@ -312,6 +312,17 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
                                 </div>
                             </section>
                         )}
+
+                        {!fullOrder.costs && fullOrder.status === 'delivered' && (
+                            <section className="bg-card border border-border rounded-xl p-5 shadow-sm text-center">
+                                <Activity className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                                <h3 className="font-semibold text-foreground mb-1">Sin desglose de costos</h3>
+                                <p className="text-xs text-muted-foreground mb-4">Esta orden no tiene un registro de costos asociado en el módulo financiero.</p>
+                                <Button variant="outline" className="w-full text-xs" onClick={() => setShowCostForm(true)}>
+                                    Registrar Costos Ahora
+                                </Button>
+                            </section>
+                        )}
                     </div>
 
                     {/* Right Column: CRM Actions (Calls & Comments) & History */}
