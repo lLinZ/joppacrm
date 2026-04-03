@@ -199,7 +199,7 @@ export default function Abandoned({ abandonedDesigns }: { abandonedDesigns: any 
                                     return (
                                         <div key={side} className="space-y-4 border border-white/5 rounded-xl bg-black/40 p-4">
                                             <h3 className="text-sm font-bold text-slate-300 uppercase px-2 border-l-2 border-purple-500">
-                                                Capa: {side === 'front' ? 'FRONTAL' : 'TRASERA'} ({sideData.length} lemenetos)
+                                                Capa: {side === 'front' ? 'FRONTAL' : 'TRASERA'} ({sideData.length} elementos)
                                             </h3>
 
                                             {/* VISUAL MOCKUP CANVAS */}
@@ -244,8 +244,8 @@ export default function Abandoned({ abandonedDesigns }: { abandonedDesigns: any 
                                                                     <div style={{
                                                                         color: el.color,
                                                                         fontFamily: el.fontFamily?.split(',')[0] || 'Arial',
-                                                                        fontSize: `${el.fontSize}cqw`, // Using container query units as a responsive trick
-                                                                        letterSpacing: `${el.letterSpacing || 0}cqw`,
+                                                                        fontSize: `${(el.fontSize / 1000) * 100}cqw`, 
+                                                                        letterSpacing: `${((el.letterSpacing || 0) / 1000) * 100}cqw`,
                                                                         fontWeight: 'bold',
                                                                         textAlign: 'center',
                                                                         lineHeight: 1.1,
