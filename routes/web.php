@@ -52,10 +52,16 @@ Route::middleware('auth')->group(function () {
     Route::post('reviews/{review}/status', [\App\Http\Controllers\Api\ReviewController::class, 'updateStatus'])->name('reviews.updateStatus');
     Route::delete('reviews/{review}', [\App\Http\Controllers\Api\ReviewController::class, 'destroy'])->name('reviews.destroy');
 
+    // Notifications
     Route::post('/notifications/mark-read', function (Illuminate\Http\Request $request) {
         $request->user()->unreadNotifications->markAsRead();
         return back();
     })->name('notifications.mark-read');
+
+    // Tools
+    Route::get('/tools/dtf-calculator', function () {
+        return Inertia::render('Tools/DtfCalculator');
+    })->name('tools.dtf-calculator');
 
     // Builder Configuration for E-commerce
     Route::get('/settings/builder', [\App\Http\Controllers\Api\BuilderConfigController::class, 'adminIndex'])->name('settings.builder.index');

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
 import { Button } from '@/Components/ui/button';
-import { PhoneCall, Calendar, User, FileText, ShoppingCart, MessageSquare, Send, Activity } from 'lucide-react';
+import { PhoneCall, Calendar, User, FileText, ShoppingCart, MessageSquare, Send, Activity, Calculator } from 'lucide-react';
 import { router, usePage } from '@inertiajs/react';
 import { STATUS_CONFIG } from '@/Pages/Orders/Index';
+import { DtfCalculatorWidget } from '@/Components/Tools/DtfCalculatorWidget';
 
 interface OrderDetailModalProps {
     order: any;
@@ -19,6 +20,7 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
     const [fullOrder, setFullOrder] = useState<any>(order);
     const [loading, setLoading] = useState(false);
     const [showCostForm, setShowCostForm] = useState(false);
+    const [showCalculator, setShowCalculator] = useState(false);
     const [costs, setCosts] = useState({
         base_cost: 0,
         print_cost: 0,
@@ -453,7 +455,12 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
                             <input type="number" step="0.01" min="0" className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:ring-primary focus:border-primary" value={costs.base_cost} onChange={e => setCosts({...costs, base_cost: parseFloat(e.target.value) || 0})} required />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-semibold text-muted-foreground">Costo de Estampado / DTF ($)</label>
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs font-semibold text-muted-foreground">Costo de Estampado / DTF ($)</label>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 text-xs px-2 text-primary hover:text-primary hover:bg-primary/10" onClick={() => setShowCalculator(true)}>
+                                    <Calculator className="h-3 w-3 mr-1" /> Calculadora
+                                </Button>
+                            </div>
                             <input type="number" step="0.01" min="0" className="flex w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:ring-primary focus:border-primary" value={costs.print_cost} onChange={e => setCosts({...costs, print_cost: parseFloat(e.target.value) || 0})} required />
                         </div>
                         <div className="space-y-1">
@@ -472,6 +479,19 @@ export function OrderDetailModal({ order, users, isOpen, onClose }: OrderDetailM
                             <Button type="submit" className="w-full">Registrar Entrega y Costos</Button>
                         </div>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* DTF Calculator Dialog */}
+            <Dialog open={showCalculator} onOpenChange={setShowCalculator}>
+                <DialogContent className="sm:max-w-xl border-border bg-card">
+                    <DtfCalculatorWidget 
+                        className="border-0 shadow-none p-0 bg-transparent"
+                        onSelectValue={(val) => {
+                            setCosts({...costs, print_cost: val});
+                            setShowCalculator(false);
+                        }} 
+                    />
                 </DialogContent>
             </Dialog>
         </Dialog>
