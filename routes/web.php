@@ -42,7 +42,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('design-requests/{design_request}/convert-to-order', [\App\Http\Controllers\DesignRequestController::class, 'convertToOrder'])->name('design-requests.convertToOrder');
     Route::post('design-requests/{design_request}/comments', [\App\Http\Controllers\DesignRequestController::class, 'storeComment'])->name('design-requests.comments.store');
-    Route::resource('design-requests', \App\Http\Controllers\DesignRequestController::class)->only(['index', 'show', 'update']);
+    Route::resource('design-requests', \App\Http\Controllers\DesignRequestController::class)->only(['index', 'show', 'update', 'destroy']);
     
     Route::get('/web-traffic', [\App\Http\Controllers\WebAnalyticsController::class, 'index'])->name('web.traffic');
     

@@ -101,4 +101,10 @@ class DesignRequestController extends Controller
 
         return redirect()->route('orders.index')->with('success', 'Orden Formal Creada Exitosamente.');
     }
+    public function destroy(DesignRequest $designRequest)
+    {
+        $designRequest->delete();
+
+        return redirect()->route('design-requests.index')->with('success', 'Solicitud eliminada.');
+    }
 }
