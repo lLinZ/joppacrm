@@ -29,6 +29,7 @@ class CatalogProduct extends Model
         'available_colors',
         'available_sizes',
         'available_genders',
+        'is_featured',
     ];
 
     protected $casts = [
@@ -37,6 +38,7 @@ class CatalogProduct extends Model
         'available_genders' => 'array',
         'images' => 'array',
         'is_published' => 'boolean',
+        'is_featured' => 'boolean',
     ];
 
     protected static function boot()

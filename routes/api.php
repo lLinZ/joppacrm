@@ -15,6 +15,7 @@ Route::post('/orders', [OrderController::class, 'store']);
 // Public catalog API (consumed by joppa-ecommerce)
 Route::prefix('catalog')->group(function () {
     Route::get('/', [CatalogController::class, 'index']);
+    Route::get('/featured', [CatalogController::class, 'featured']);
     Route::get('/collections', [CatalogController::class, 'collections']);
     Route::get('/{product}', [CatalogController::class, 'show']);
     Route::post('/{id}/view', [CatalogController::class, 'incrementView']);

@@ -287,4 +287,16 @@ class CatalogProductController extends Controller
 
         return redirect()->back()->with('success', 'Orden del catálogo actualizado.');
     }
+
+    /**
+     * Toggle the featured status of a product.
+     */
+    public function toggleFeatured(CatalogProduct $catalog_product)
+    {
+        $catalog_product->update([
+            'is_featured' => !$catalog_product->is_featured
+        ]);
+
+        return redirect()->back()->with('success', $catalog_product->is_featured ? 'Producto destacado en Home.' : 'Producto quitado de Home.');
+    }
 }

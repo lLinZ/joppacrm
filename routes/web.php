@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::post('collections/{collection}/products', [\App\Http\Controllers\CollectionController::class, 'syncProducts'])->name('collections.syncProducts');
     Route::resource('catalog-products', \App\Http\Controllers\CatalogProductController::class)->except(['create', 'show']);
     Route::post('catalog-products/reorder', [\App\Http\Controllers\CatalogProductController::class, 'updateOrder'])->name('catalog-products.reorder');
+    Route::post('catalog-products/{catalog_product}/toggle-featured', [\App\Http\Controllers\CatalogProductController::class, 'toggleFeatured'])->name('catalog-products.toggle-featured');
     Route::get('catalog-products/{catalog_product}/analytics', [\App\Http\Controllers\CatalogProductController::class, 'analytics'])->name('catalog-products.analytics');
     Route::resource('expenses', \App\Http\Controllers\ExpenseController::class);
     Route::resource('exchange-rates', \App\Http\Controllers\ExchangeRateController::class);

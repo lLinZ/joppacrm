@@ -17,8 +17,7 @@ class CatalogController extends Controller
     {
         $query = CatalogProduct::with(['collections'])
             ->where('is_published', true)
-            ->orderBy('catalog_order')
-            ->orderBy('name');
+            ->orderBy('created_at', 'desc');
 
         // Filter by collection slug
         if ($request->has('collection') && $request->collection) {
@@ -37,6 +36,20 @@ class CatalogController extends Controller
         return response()->json([
             'products' => $query->get(),
         ]);
+    }
+
+    /**
+     * Return featured products for the landing page.
+     */
+    public function featured()
+    {
+        $products = CatalogProduct::with(['collections'])
+            ->where('is_published', true)
+            ->where('is_featured', true)
+            ->take(4)
+            ->get();
+
+        return response()->json(['products' => $products]);
     }
 
     /**
