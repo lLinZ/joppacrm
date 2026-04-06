@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', \App\Http\Controllers\UserController::class);
 
     // Reviews Moderation
+    Route::get('reviews', [\App\Http\Controllers\Api\ReviewController::class, 'adminIndex'])->name('reviews.index');
     Route::post('reviews/{review}/status', [\App\Http\Controllers\Api\ReviewController::class, 'updateStatus'])->name('reviews.updateStatus');
     Route::delete('reviews/{review}', [\App\Http\Controllers\Api\ReviewController::class, 'destroy'])->name('reviews.destroy');
 

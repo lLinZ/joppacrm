@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog, ShoppingBag, Layers, Store, Palette, Globe, Bell, Check, Ghost, TrendingUp, Calculator } from 'lucide-react';
+import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog, ShoppingBag, Layers, Store, Palette, Globe, Bell, Check, Ghost, TrendingUp, Calculator, Star } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { Toaster, toast } from 'sonner';
 
@@ -102,6 +102,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { name: 'Clientes', href: route('clients.index'), routeName: 'clients.*', icon: UserSquare2 },
         { name: 'Inventario', href: route('products.index'), routeName: 'products.*', icon: PackageCheck },
         { name: 'Catálogo', href: route('catalog-products.index'), routeName: 'catalog-products.*', icon: Store },
+        { name: 'Reseñas', href: route('reviews.index'), routeName: 'reviews.*', icon: Star },
         { name: 'Colecciones', href: route('collections.index'), routeName: 'collections.*', icon: Layers },
         { name: 'Gastos', href: route('expenses.index'), routeName: 'expenses.*', icon: Receipt },
         { name: 'Usuarios', href: route('users.index'), routeName: 'users.*', icon: UserCog },

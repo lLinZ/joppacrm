@@ -5,10 +5,29 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\CatalogProduct;
 use App\Models\CatalogProductReview;
+use App\Models\User;
+use App\Notifications\NewReviewNotification;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ReviewController extends Controller
 {
+    /**
+     * Admin: Get all reviews for moderation.
+     */
+    public function adminIndex(Request $request)
+    {
+        $reviews = CatalogProductReview::with('product:id,name,images')
+            ->orderByRaw("FIELD(status, 'pending') DESC")
+            ->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('Reviews/Index', [
+            'reviews' => $reviews,
+        ]);
+    }
+
     /**
      * Get approved reviews for a product.
      */
@@ -62,6 +81,12 @@ class ReviewController extends Controller
             'status' => 'pending', // Requires admin approval
             'is_verified_purchase' => false,
         ]);
+
+        // Notify admins
+        $admins = User::all();
+        foreach ($admins as $admin) {
+            $admin->notify(new NewReviewNotification($review->load('product')));
+        }
 
         return response()->json([
             'message' => '¡Gracias! Tu reseña ha sido enviada y está pendiente de moderación.',
