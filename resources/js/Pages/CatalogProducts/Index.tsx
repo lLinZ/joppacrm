@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { PageHeader } from '@/Components/ui/PageHeader';
 import { Button } from '@/Components/ui/button';
-import { Store, Plus, FileEdit, Trash2, Globe, Lock, Eye, BarChart2, Star } from 'lucide-react';
+import { Store, Plus, FileEdit, Trash2, Globe, Lock, Eye, BarChart2, Star, Save } from 'lucide-react';
 import { AnalyticsModal } from '@/Components/Catalog/AnalyticsModal';
 
 interface Collection {
@@ -20,6 +20,7 @@ interface CatalogProduct {
     unique_views_count: number;
     collections: Collection[];
     is_featured: boolean;
+    catalog_order: number;
 }
 
 export default function CatalogProductsIndex({ products }: { products: CatalogProduct[] }) {
@@ -31,6 +32,34 @@ export default function CatalogProductsIndex({ products }: { products: CatalogPr
     
     const handleToggleFeatured = (id: number) => {
         router.post(route('catalog-products.toggle-featured', id), {}, { preserveScroll: true });
+    };
+
+    // Order management for featured products
+    const [localOrders, setLocalOrders] = useState<Record<number, number>>(
+        Object.fromEntries(products.map(p => [p.id, p.catalog_order || 0]))
+    );
+    const [isReordering, setIsReordering] = useState(false);
+
+    const handleOrderChange = (id: number, value: string) => {
+        const val = parseInt(value) || 0;
+        setLocalOrders(prev => ({ ...prev, [id]: val }));
+        setIsReordering(true);
+    };
+
+    const saveOrders = () => {
+        setProcessing(true);
+        const orders = Object.entries(localOrders).map(([id, catalog_order]) => ({
+            id: parseInt(id),
+            catalog_order
+        }));
+
+        router.post(route('catalog-products.reorder'), { orders }, {
+            preserveScroll: true,
+            onFinish: () => {
+                setProcessing(false);
+                setIsReordering(false);
+            }
+        });
     };
 
     const handleCreate = (e: React.FormEvent) => {
@@ -57,6 +86,11 @@ export default function CatalogProductsIndex({ products }: { products: CatalogPr
                     description="Crea y gestiona productos diseñados puramente para marketing (sin afectar el inventario base)."
                 />
                 <div className="flex items-center gap-3">
+                    {isReordering && (
+                        <Button variant="outline" onClick={saveOrders} disabled={processing} className="border-primary text-primary hover:bg-primary/5">
+                            <Save className="h-4 w-4 mr-2" /> Guardar Orden Home
+                        </Button>
+                    )}
                     {!adding && (
                         <Button onClick={() => setAdding(true)}>
                             <Plus className="h-4 w-4 mr-2" /> Crear Producto Libre
@@ -132,13 +166,24 @@ export default function CatalogProductsIndex({ products }: { products: CatalogPr
                             {products.map((p) => (
                                 <tr key={p.id} className="hover:bg-muted/30 transition-colors">
                                     <td className="px-6 py-4 text-center">
-                                        <button 
-                                            onClick={() => handleToggleFeatured(p.id)}
-                                            className={`p-2 rounded-lg transition-all ${p.is_featured ? 'text-yellow-500 bg-yellow-500/10' : 'text-muted-foreground hover:bg-muted'}`}
-                                            title={p.is_featured ? "Quitar de Home" : "Destacar en Home"}
-                                        >
-                                            <Star className={`w-5 h-5 ${p.is_featured ? 'fill-current' : ''}`} />
-                                        </button>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <button 
+                                                onClick={() => handleToggleFeatured(p.id)}
+                                                className={`p-2 rounded-lg transition-all ${p.is_featured ? 'text-yellow-500 bg-yellow-500/10' : 'text-muted-foreground hover:bg-muted'}`}
+                                                title={p.is_featured ? "Quitar de Home" : "Destacar en Home"}
+                                            >
+                                                <Star className={`w-5 h-5 ${p.is_featured ? 'fill-current' : ''}`} />
+                                            </button>
+                                            {p.is_featured && (
+                                                <input
+                                                    type="number"
+                                                    value={localOrders[p.id] ?? 0}
+                                                    onChange={(e) => handleOrderChange(p.id, e.target.value)}
+                                                    className="w-10 px-1 py-0.5 bg-background border border-border rounded text-center text-[10px] focus:ring-1 focus:ring-primary outline-none font-bold"
+                                                    title="Orden en Landing Page"
+                                                />
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="font-medium text-foreground">{p.name}</div>

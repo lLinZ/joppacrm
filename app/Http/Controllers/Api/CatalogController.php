@@ -46,6 +46,8 @@ class CatalogController extends Controller
         $products = CatalogProduct::with(['collections'])
             ->where('is_published', true)
             ->where('is_featured', true)
+            ->orderBy('catalog_order')
+            ->orderBy('created_at', 'desc')
             ->take(4)
             ->get();
 
