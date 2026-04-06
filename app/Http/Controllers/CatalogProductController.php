@@ -267,4 +267,24 @@ class CatalogProductController extends Controller
             'chart_data' => $data,
         ]);
     }
+
+    /**
+     * Update the sort order of products.
+     */
+    public function updateOrder(Request $request)
+    {
+        $request->validate([
+            'orders' => 'required|array',
+            'orders.*.id' => 'required|exists:catalog_products,id',
+            'orders.*.catalog_order' => 'required|integer',
+        ]);
+
+        foreach ($request->orders as $orderData) {
+            CatalogProduct::where('id', $orderData['id'])->update([
+                'catalog_order' => $orderData['catalog_order']
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Orden del catálogo actualizado.');
+    }
 }
