@@ -30,6 +30,9 @@ Route::post('/design-requests', [\App\Http\Controllers\Api\DesignRequestControll
 Route::post('/design-assets', [\App\Http\Controllers\Api\DesignRequestController::class, 'uploadAsset']);
 Route::post('/contact-messages', [\App\Http\Controllers\Api\ContactMessageController::class, 'store']);
 
+// Postulaciones de costureras (consumido por joppa-ecommerce en /unete)
+Route::post('/seamstress-applications', [\App\Http\Controllers\Api\SeamstressApplicationController::class, 'store']);
+
 // Public builder config (consumed by joppa-ecommerce)
 Route::get('/builder-config', [BuilderConfigController::class, 'index']);
 

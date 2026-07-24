@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog, ShoppingBag, Layers, Store, Palette, Globe, Bell, Check, Ghost, TrendingUp, Calculator, Star } from 'lucide-react';
+import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, LogOut, Settings, UserCog, ShoppingBag, Layers, Store, Palette, Globe, Bell, Check, Ghost, TrendingUp, Calculator, Star, Scissors } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { Toaster, toast } from 'sonner';
 
@@ -97,6 +97,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { name: 'Órdenes', href: route('orders.index'), routeName: 'orders.*', icon: ShoppingBag },
         { name: 'Sol. de Diseño', href: route('design-requests.index'), routeName: 'design-requests.*', icon: Palette },
         { name: 'D. Huérfanos', href: route('abandoned-designs.index'), routeName: 'abandoned-designs.*', icon: Ghost },
+        { name: 'Costureras', href: route('seamstress-applications.index'), routeName: 'seamstress-applications.*', icon: Scissors },
         { name: 'Calculadora DTF', href: route('tools.dtf-calculator'), routeName: 'tools.dtf-calculator', icon: Calculator },
         { name: 'Proveedores', href: route('suppliers.index'), routeName: 'suppliers.*', icon: Users },
         { name: 'Clientes', href: route('clients.index'), routeName: 'clients.*', icon: UserSquare2 },
