@@ -273,7 +273,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <aside className={`
                 fixed inset-y-0 left-0 z-50 w-64 border-r backdrop-blur-xl transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:w-64
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-            `} style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(10,10,10,0.65)' }}>
+            `} style={{
+                borderColor: 'rgba(255,255,255,0.06)',
+                background: 'rgba(10,10,10,0.65)',
+                // Deja libre el notch/barra de estado y la barra de inicio en iPhone
+                paddingTop: 'var(--safe-top)',
+                paddingBottom: 'var(--safe-bottom)',
+                paddingLeft: 'var(--safe-left)',
+            }}>
                 <div className="flex flex-col h-full relative z-10">
                     <div className="h-16 flex items-center px-6 border-b justify-between" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                         <div className="flex items-center gap-3">
@@ -371,7 +378,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 {/* relative z-30: el backdrop-blur crea su propio contexto de apilamiento, así que
                     el header necesita z-index propio para que el panel de notificaciones quede por
                     encima del contenido (y por debajo del sidebar móvil, que va en z-40/z-50). */}
-                <header className="relative z-30 h-16 flex items-center justify-between px-6 border-b backdrop-blur-xl lg:hidden" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(10,10,10,0.65)' }}>
+                <header className="relative z-30 h-16 flex items-center justify-between px-6 border-b backdrop-blur-xl lg:hidden" style={{
+                    borderColor: 'rgba(255,255,255,0.06)',
+                    background: 'rgba(10,10,10,0.65)',
+                    // Crece para que la barra de estado de iOS no tape los botones
+                    height: 'calc(4rem + var(--safe-top))',
+                    paddingTop: 'var(--safe-top)',
+                }}>
                     <div className="flex items-center">
                         <Button variant="ghost" size="icon" className="-ml-2 text-white" onClick={() => setSidebarOpen(true)}>
                             <Menu className="h-5 w-5" />
@@ -382,7 +395,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     <NotificationBell unreadCount={auth.unread_count || 0} notifications={auth.notifications || []} direction="down" />
                 </header>
                 
-                <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
+                <div className="flex-1 p-6 lg:p-8 overflow-y-auto" style={{ paddingBottom: 'calc(1.5rem + var(--safe-bottom))' }}>
                     <div className="max-w-7xl mx-auto">
                         {children}
                     </div>
