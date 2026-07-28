@@ -64,10 +64,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('reviews/{review}', [\App\Http\Controllers\Api\ReviewController::class, 'destroy'])->name('reviews.destroy');
 
     // Notifications
-    Route::post('/notifications/mark-read', function (Illuminate\Http\Request $request) {
-        $request->user()->unreadNotifications->markAsRead();
-        return back();
-    })->name('notifications.mark-read');
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.mark-read');
+    Route::post('/notifications/{id}/open', [\App\Http\Controllers\NotificationController::class, 'open'])->name('notifications.open');
 
     // Tools
     Route::get('/tools/dtf-calculator', function () {

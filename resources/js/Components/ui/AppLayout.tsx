@@ -4,13 +4,42 @@ import { LayoutDashboard, Users, UserSquare2, PackageCheck, Receipt, Menu, X, Lo
 import { Button } from '@/Components/ui/button';
 import { Toaster, toast } from 'sonner';
 
+// Resuelve ícono y color por tipo de notificación (según qué ID trae en su data)
+function notificationMeta(data: any): { Icon: any; chip: string; ring: string } {
+    if (data?.seamstress_application_id) return { Icon: Scissors, chip: 'bg-emerald-500/15 text-emerald-400', ring: 'ring-emerald-500/20' };
+    if (data?.design_request_id)         return { Icon: Palette, chip: 'bg-purple-500/15 text-purple-400', ring: 'ring-purple-500/20' };
+    if (data?.order_id)                  return { Icon: ShoppingBag, chip: 'bg-amber-500/15 text-amber-400', ring: 'ring-amber-500/20' };
+    if (data?.product_id)                return { Icon: Star, chip: 'bg-yellow-500/15 text-yellow-400', ring: 'ring-yellow-500/20' };
+    return { Icon: Bell, chip: 'bg-slate-500/15 text-slate-300', ring: 'ring-slate-500/20' };
+}
+
+// Hora relativa en español
+export function timeAgo(dateStr?: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const secs = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (secs < 60) return 'hace un momento';
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `hace ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `hace ${hrs} h`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `hace ${days} d`;
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+}
+
 function NotificationBell({ unreadCount, notifications, direction = 'up', align = 'right' }: { unreadCount: number, notifications: any[], direction?: 'up'|'down', align?: 'left'|'right' }) {
     const [open, setOpen] = useState(false);
-    
-    const markAsRead = () => {
+
+    const markAllRead = () => {
         if (unreadCount > 0) {
             router.post(route('notifications.mark-read'), {}, { preserveScroll: true, preserveState: true });
         }
+    };
+
+    const openNotification = (id: string) => {
+        setOpen(false);
+        router.post(route('notifications.open', id));
     };
 
     return (
@@ -18,38 +47,75 @@ function NotificationBell({ unreadCount, notifications, direction = 'up', align 
             <Button variant="ghost" size="icon" onClick={() => setOpen(!open)} className="relative text-slate-300 hover:text-white">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-black">
+                    <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-black">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
             </Button>
-            
+
             {open && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className={`absolute ${align === 'left' ? 'left-0' : '-right-2 sm:right-0'} w-[calc(100vw-2.5rem)] sm:w-80 rounded-xl border border-white/10 bg-[#121212] shadow-2xl z-50 overflow-hidden flex flex-col max-h-[400px] ${direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
-                        <div className="p-3 border-b border-white/10 flex items-center justify-between bg-white/5">
-                            <h3 className="font-semibold text-sm text-white">Notificaciones</h3>
+                    <div className={`absolute ${align === 'left' ? 'left-0' : '-right-2 sm:right-0'} w-[calc(100vw-2rem)] sm:w-96 rounded-2xl border border-white/10 bg-[#0f0f0f] shadow-2xl z-50 overflow-hidden flex flex-col max-h-[70vh] sm:max-h-[460px] ${direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                        {/* Cabecera */}
+                        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between bg-white/[0.03]">
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-semibold text-sm text-white">Notificaciones</h3>
+                                {unreadCount > 0 && (
+                                    <span className="text-[10px] font-bold bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded-full">{unreadCount}</span>
+                                )}
+                            </div>
                             {unreadCount > 0 && (
-                                <button onClick={markAsRead} className="text-xs text-primary hover:underline flex items-center gap-1">
-                                    <Check className="h-3 w-3" /> Marcar leídas
+                                <button onClick={markAllRead} className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors">
+                                    <Check className="h-3 w-3" /> Marcar todas
                                 </button>
                             )}
                         </div>
-                        <div className="overflow-y-auto flex-1 p-2">
+
+                        {/* Lista */}
+                        <div className="overflow-y-auto flex-1">
                             {notifications.length === 0 ? (
-                                <div className="p-4 text-center text-sm text-slate-400">No hay notificaciones recientes.</div>
+                                <div className="px-6 py-12 text-center">
+                                    <Bell className="h-8 w-8 text-slate-700 mx-auto mb-3" />
+                                    <p className="text-sm text-slate-400">Todo al día</p>
+                                    <p className="text-xs text-slate-600 mt-1">No tienes notificaciones sin leer.</p>
+                                </div>
                             ) : (
-                                <div className="space-y-1">
-                                    {notifications.map((n: any) => (
-                                        <div key={n.id} className="p-3 rounded-lg hover:bg-white/5 transition-colors text-sm">
-                                            <p className="font-semibold text-white">{n.data.title}</p>
-                                            <p className="text-slate-400 mt-0.5 text-xs line-clamp-2">{n.data.message}</p>
-                                        </div>
-                                    ))}
+                                <div className="p-1.5">
+                                    {notifications.map((n: any) => {
+                                        const meta = notificationMeta(n.data);
+                                        return (
+                                            <button
+                                                key={n.id}
+                                                onClick={() => openNotification(n.id)}
+                                                className="w-full text-left flex gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors group"
+                                            >
+                                                <span className={`shrink-0 h-9 w-9 rounded-full flex items-center justify-center ring-1 ${meta.chip} ${meta.ring}`}>
+                                                    <meta.Icon className="h-4 w-4" />
+                                                </span>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <p className="font-semibold text-white text-sm leading-snug">{n.data.title}</p>
+                                                        <span className="shrink-0 h-2 w-2 rounded-full bg-emerald-400 mt-1.5" />
+                                                    </div>
+                                                    <p className="text-slate-400 mt-0.5 text-xs line-clamp-2">{n.data.message}</p>
+                                                    <p className="text-slate-600 mt-1 text-[11px]">{timeAgo(n.created_at)}</p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
+
+                        {/* Footer */}
+                        <Link
+                            href={route('notifications.index')}
+                            onClick={() => setOpen(false)}
+                            className="px-4 py-3 border-t border-white/10 text-center text-xs font-medium text-primary hover:bg-white/[0.03] transition-colors"
+                        >
+                            Ver todas las notificaciones
+                        </Link>
                     </div>
                 </>
             )}
