@@ -73,6 +73,10 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('Tools/DtfCalculator');
     })->name('tools.dtf-calculator');
 
+    // Prueba de plantillas de correo
+    Route::get('/tools/email-test', [\App\Http\Controllers\EmailTestController::class, 'index'])->name('tools.email-test');
+    Route::post('/tools/email-test', [\App\Http\Controllers\EmailTestController::class, 'send'])->name('tools.email-test.send');
+
     // Builder Configuration for E-commerce
     Route::get('/settings/builder', [\App\Http\Controllers\Api\BuilderConfigController::class, 'adminIndex'])->name('settings.builder.index');
     Route::post('/settings/builder', [\App\Http\Controllers\Api\BuilderConfigController::class, 'update'])->name('settings.builder.update');
