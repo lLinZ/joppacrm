@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{id}/open', [\App\Http\Controllers\NotificationController::class, 'open'])->name('notifications.open');
 
     // Suscripciones de notificaciones push (PWA)
+    Route::get('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'index'])->name('push-subscriptions.index');
     Route::post('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
     Route::delete('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
     Route::post('/push-subscriptions/test', [\App\Http\Controllers\PushSubscriptionController::class, 'test'])->name('push-subscriptions.test');
