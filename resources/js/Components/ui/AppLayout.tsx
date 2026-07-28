@@ -368,7 +368,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 relative z-10">
-                <header className="h-16 flex items-center justify-between px-6 border-b backdrop-blur-xl lg:hidden" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(10,10,10,0.65)' }}>
+                {/* relative z-30: el backdrop-blur crea su propio contexto de apilamiento, así que
+                    el header necesita z-index propio para que el panel de notificaciones quede por
+                    encima del contenido (y por debajo del sidebar móvil, que va en z-40/z-50). */}
+                <header className="relative z-30 h-16 flex items-center justify-between px-6 border-b backdrop-blur-xl lg:hidden" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(10,10,10,0.65)' }}>
                     <div className="flex items-center">
                         <Button variant="ghost" size="icon" className="-ml-2 text-white" onClick={() => setSidebarOpen(true)}>
                             <Menu className="h-5 w-5" />
