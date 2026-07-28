@@ -47,6 +47,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('design-requests', \App\Http\Controllers\DesignRequestController::class)->only(['index', 'show', 'update', 'destroy']);
     
     // Postulaciones de costureras (recibidas desde /unete en el e-commerce)
+    // Rutas GET específicas antes del resource para que no las capture {seamstress_application} de show
+    Route::get('seamstress-applications/analytics', [\App\Http\Controllers\SeamstressApplicationController::class, 'analytics'])->name('seamstress-applications.analytics');
+    Route::get('seamstress-applications/export', [\App\Http\Controllers\SeamstressApplicationController::class, 'export'])->name('seamstress-applications.export');
     Route::resource('seamstress-applications', \App\Http\Controllers\SeamstressApplicationController::class)
         ->only(['index', 'show', 'update', 'destroy']);
 

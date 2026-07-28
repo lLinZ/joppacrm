@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
+import { BarChart3, Download } from 'lucide-react';
 
 interface SeamstressApplication {
     id: number;
@@ -229,7 +230,7 @@ export default function Index({ applications }: Props) {
             <div className="py-10">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-5">
 
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
                         <div>
                             <h1 className="text-2xl font-bold text-white tracking-tight">Postulaciones de Costureras</h1>
                             <p className="text-slate-400 text-sm mt-0.5">
@@ -237,7 +238,26 @@ export default function Index({ applications }: Props) {
                                 {avgPrice !== null && ` · Tarifa promedio $${avgPrice.toFixed(2)} por pieza`}
                             </p>
                         </div>
-                        <div className="hidden sm:flex items-center gap-2 flex-wrap justify-end">
+                        {total > 0 && (
+                            <div className="flex items-center gap-2">
+                                <Link
+                                    href="/seamstress-applications/analytics"
+                                    className="inline-flex items-center gap-2 text-slate-200 hover:text-white font-medium text-sm border border-white/10 hover:border-white/25 bg-white/5 px-4 py-2 rounded-lg transition-colors"
+                                >
+                                    <BarChart3 className="w-4 h-4" /> Analíticas
+                                </Link>
+                                <a
+                                    href="/seamstress-applications/export"
+                                    className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium text-sm border border-emerald-400/20 hover:border-emerald-400/50 bg-emerald-400/10 px-4 py-2 rounded-lg transition-colors"
+                                >
+                                    <Download className="w-4 h-4" /> Exportar CSV
+                                </a>
+                            </div>
+                        )}
+                    </div>
+
+                    {total > 0 && (
+                        <div className="hidden sm:flex items-center gap-2 flex-wrap">
                             {STATUS_ORDER.map((s) => {
                                 const count = grouped[s]?.length ?? 0;
                                 if (count === 0) return null;
@@ -249,7 +269,7 @@ export default function Index({ applications }: Props) {
                                 );
                             })}
                         </div>
-                    </div>
+                    )}
 
                     {total === 0 ? (
                         <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-6 py-16 text-center">
