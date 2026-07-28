@@ -104,6 +104,28 @@ class SeamstressApplicationController extends Controller
             ->sortBy('price')
             ->values();
 
+        // --- Fichas completas para debatir en vivo (fotos + notas de cada prospecto) ---
+        $prospects = $apps->sortByDesc('created_at')->map(fn ($a) => [
+            'id'            => $a->id,
+            'name'          => $a->name,
+            'email'         => $a->email,
+            'phone'         => $a->phone,
+            'location'      => $a->location,
+            'price'         => $a->price_per_piece !== null ? (float) $a->price_per_piece : null,
+            'capacity'      => $a->weekly_capacity,
+            'experience'    => SeamstressApplication::EXPERIENCE_LABELS[$a->experience_years] ?? null,
+            'machines'      => collect($a->machines ?? [])
+                                ->map(fn ($m) => SeamstressApplication::MACHINE_LABELS[$m] ?? $m)
+                                ->values(),
+            'status'        => $a->status,
+            'status_label'  => self::STATUS_LABELS[$a->status] ?? $a->status,
+            'photos'        => $a->photos ?? [],
+            'message'       => $a->message,
+            'budget_notes'  => $a->budget_notes,
+            'admin_notes'   => $a->admin_notes,
+            'created_at'    => $a->created_at->format('d/m/Y'),
+        ])->values();
+
         return Inertia::render('SeamstressApplications/Analytics', [
             'stats'            => $stats,
             'byStatus'         => $byStatus,
@@ -113,6 +135,7 @@ class SeamstressApplicationController extends Controller
             'bySource'         => $bySource,
             'timeline'         => $timeline,
             'budgetComparison' => $budgetComparison,
+            'prospects'        => $prospects,
         ]);
     }
 

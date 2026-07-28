@@ -6,11 +6,15 @@
 // Localización: CRM (Admin)
 // </ai_context>
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { StatCard } from '@/Components/ui/StatCard';
 import { Head, Link } from '@inertiajs/react';
-import { Users, DollarSign, TrendingUp, Gauge, CheckCircle2, Download, ArrowLeft } from 'lucide-react';
+import {
+    Users, DollarSign, TrendingUp, Gauge, Download, ArrowLeft,
+    ChevronDown, ChevronsDownUp, ChevronsUpDown, Image as ImageIcon,
+    MessageSquare, StickyNote, Phone, Mail, MapPin,
+} from 'lucide-react';
 import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -18,6 +22,24 @@ import {
 
 interface Dist { label: string; value: number }
 interface Budget { id: number; name: string; price: number; capacity: number; status: string }
+interface Prospect {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
+    price: number | null;
+    capacity: number | null;
+    experience: string | null;
+    machines: string[];
+    status: string;
+    status_label: string;
+    photos: string[];
+    message: string | null;
+    budget_notes: string | null;
+    admin_notes: string | null;
+    created_at: string;
+}
 
 interface Props {
     stats: {
@@ -37,7 +59,16 @@ interface Props {
     bySource: Dist[];
     timeline: { display: string; value: number }[];
     budgetComparison: Budget[];
+    prospects: Prospect[];
 }
+
+const STATUS_STYLE: Record<string, { badge: string; dot: string }> = {
+    pending:   { badge: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20', dot: 'bg-yellow-400' },
+    reviewed:  { badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',       dot: 'bg-blue-400' },
+    contacted: { badge: 'bg-purple-500/10 text-purple-400 border-purple-500/20', dot: 'bg-purple-400' },
+    hired:     { badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400' },
+    rejected:  { badge: 'bg-red-500/10 text-red-400 border-red-500/20',           dot: 'bg-red-400' },
+};
 
 const PALETTE = ['#34d399', '#D4AF37', '#60a5fa', '#c084fc', '#f87171', '#22d3ee', '#fb923c', '#a3e635'];
 
@@ -69,7 +100,133 @@ function EmptyChart({ msg = 'Sin datos suficientes.' }: { msg?: string }) {
 
 const money = (n: number | null) => (n === null ? '—' : `$${Number(n).toFixed(2)}`);
 
-export default function Analytics({ stats, byStatus, byExperience, byMachine, byLocation, bySource, timeline, budgetComparison }: Props) {
+function DataChip({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">{label}</span>
+            <span className="text-sm text-slate-200">{value}</span>
+        </div>
+    );
+}
+
+function NoteBlock({ icon: Icon, label, text, accent }: { icon: any; label: string; text: string; accent: string }) {
+    return (
+        <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3.5">
+            <div className={`flex items-center gap-1.5 mb-1.5 text-xs font-semibold ${accent}`}>
+                <Icon className="w-3.5 h-3.5" /> {label}
+            </div>
+            <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">{text}</p>
+        </div>
+    );
+}
+
+function ProspectCard({ p, open, onToggle, onZoom }: { p: Prospect; open: boolean; onToggle: () => void; onZoom: (url: string) => void }) {
+    const st = STATUS_STYLE[p.status] ?? STATUS_STYLE.pending;
+    const hasNotes = p.message || p.budget_notes || p.admin_notes;
+
+    return (
+        <div className="rounded-2xl overflow-hidden border border-white/8 bg-white/[0.03]">
+            {/* Cabecera clicable */}
+            <button onClick={onToggle} className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 hover:bg-white/[0.04] transition-colors text-left">
+                <div className="flex items-center gap-3 min-w-0">
+                    <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${open ? '' : '-rotate-90'}`} />
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-white truncate">{p.name}</span>
+                            <span className={`text-[11px] border px-2 py-0.5 rounded-full font-medium ${st.badge}`}>{p.status_label}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
+                            <MapPin className="w-3 h-3" /> {p.location}
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4 shrink-0">
+                    <div className="text-right hidden sm:block">
+                        <div className="text-emerald-400 font-semibold">{p.price !== null ? money(p.price) : <span className="text-slate-600">Sin tarifa</span>}</div>
+                        <div className="text-[11px] text-slate-500">{p.photos.length} foto{p.photos.length !== 1 ? 's' : ''}</div>
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-xs text-slate-500 sm:hidden">
+                        <ImageIcon className="w-3.5 h-3.5" /> {p.photos.length}
+                    </span>
+                </div>
+            </button>
+
+            {/* Contenido desplegable */}
+            {open && (
+                <div className="border-t border-white/8 p-4 sm:p-5 space-y-5">
+                    {/* Datos clave */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <DataChip label="Tarifa / pieza" value={p.price !== null ? <span className="text-emerald-400 font-semibold">{money(p.price)}</span> : '—'} />
+                        <DataChip label="Capacidad" value={p.capacity ? `${p.capacity} pzs/sem` : '—'} />
+                        <DataChip label="Experiencia" value={p.experience ?? '—'} />
+                        <DataChip label="Postulada" value={p.created_at} />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <DataChip label="Contacto" value={
+                            <span className="flex flex-col gap-1">
+                                <a href={`mailto:${p.email}`} className="inline-flex items-center gap-1.5 text-emerald-400 hover:underline"><Mail className="w-3.5 h-3.5" /> {p.email}</a>
+                                <a href={`https://wa.me/${p.phone.replace(/[^\d]/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-slate-300 hover:text-white"><Phone className="w-3.5 h-3.5" /> {p.phone}</a>
+                            </span>
+                        } />
+                        <DataChip label="Máquinas" value={
+                            p.machines.length ? (
+                                <span className="flex flex-wrap gap-1.5">
+                                    {p.machines.map((m) => <span key={m} className="text-[11px] bg-white/8 border border-white/10 px-2 py-0.5 rounded-full">{m}</span>)}
+                                </span>
+                            ) : '—'
+                        } />
+                    </div>
+
+                    {/* Minigalería */}
+                    <div>
+                        <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-slate-400">
+                            <ImageIcon className="w-3.5 h-3.5" /> Fotos de su trabajo ({p.photos.length})
+                        </div>
+                        {p.photos.length ? (
+                            <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-2">
+                                {p.photos.map((photo, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => onZoom(photo)}
+                                        className="aspect-square rounded-lg overflow-hidden border border-white/10 bg-black hover:border-emerald-400/50 transition-colors group"
+                                    >
+                                        <img src={photo} alt={`${p.name} trabajo ${i + 1}`} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-slate-600 text-sm">No adjuntó fotos.</p>
+                        )}
+                    </div>
+
+                    {/* Resumen de notas */}
+                    {hasNotes && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {p.message && <NoteBlock icon={MessageSquare} label="Mensaje de la postulante" text={p.message} accent="text-blue-400" />}
+                            {p.budget_notes && <NoteBlock icon={DollarSign} label="Detalle de presupuesto" text={p.budget_notes} accent="text-emerald-400" />}
+                            {p.admin_notes && <NoteBlock icon={StickyNote} label="Notas internas del equipo" text={p.admin_notes} accent="text-amber-400" />}
+                        </div>
+                    )}
+
+                    <div className="flex justify-end">
+                        <Link href={`/seamstress-applications/${p.id}`} className="text-xs text-slate-400 hover:text-white border border-white/10 hover:border-white/25 px-3 py-1.5 rounded-lg transition-colors">
+                            Abrir ficha completa →
+                        </Link>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function Analytics({ stats, byStatus, byExperience, byMachine, byLocation, bySource, timeline, budgetComparison, prospects }: Props) {
+    const [lightbox, setLightbox] = useState<string | null>(null);
+    const [openIds, setOpenIds] = useState<number[]>([]);
+
+    const toggle = (id: number) => setOpenIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+    const allOpen = prospects.length > 0 && openIds.length === prospects.length;
+    const toggleAll = () => setOpenIds(allOpen ? [] : prospects.map((p) => p.id));
     const hasData = stats.total > 0;
     const exportUrl = route('seamstress-applications.export');
 
@@ -251,10 +408,54 @@ export default function Analytics({ stats, byStatus, byExperience, byMachine, by
                                     ))}
                                 </div>
                             </ChartCard>
+
+                            {/* Fichas de prospecto para debatir en vivo */}
+                            <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5">
+                                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                    <div>
+                                        <h3 className="text-white font-semibold">Fichas de prospectos</h3>
+                                        <p className="text-slate-500 text-xs mt-0.5">Fotos y notas de cada candidata para revisarlas en equipo. Toca una para desplegarla.</p>
+                                    </div>
+                                    {prospects.length > 0 && (
+                                        <button
+                                            onClick={toggleAll}
+                                            className="inline-flex items-center gap-2 text-slate-200 hover:text-white font-medium text-sm border border-white/10 hover:border-white/25 bg-white/5 px-4 py-2 rounded-lg transition-colors"
+                                        >
+                                            {allOpen ? <><ChevronsDownUp className="w-4 h-4" /> Colapsar todas</> : <><ChevronsUpDown className="w-4 h-4" /> Expandir todas</>}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {prospects.length === 0 ? (
+                                    <p className="text-slate-600 text-sm py-4 text-center">No hay prospectos para mostrar.</p>
+                                ) : (
+                                    <div className="space-y-2.5">
+                                        {prospects.map((p) => (
+                                            <ProspectCard
+                                                key={p.id}
+                                                p={p}
+                                                open={openIds.includes(p.id)}
+                                                onToggle={() => toggle(p.id)}
+                                                onZoom={setLightbox}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </>
                     )}
                 </div>
             </div>
+
+            {/* Lightbox de fotos */}
+            {lightbox && (
+                <div
+                    onClick={() => setLightbox(null)}
+                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6 cursor-zoom-out"
+                >
+                    <img src={lightbox} alt="Trabajo de la postulante" className="max-w-full max-h-full object-contain rounded-lg" />
+                </div>
+            )}
         </AppLayout>
     );
 }
