@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\SeamstressApplicationReceived;
 use App\Models\SeamstressApplication;
 use App\Notifications\NewSeamstressApplicationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 
 class SeamstressApplicationController extends Controller
@@ -59,6 +61,14 @@ class SeamstressApplicationController extends Controller
         } catch (\Throwable $e) {
             // La postulación ya está guardada; no fallamos la petición por la notificación
             Log::error('Failed to notify new seamstress application: ' . $e->getMessage());
+        }
+
+        // Correo de confirmación a la postulante ("estamos revisando tu solicitud")
+        try {
+            Mail::to($application->email)->send(new SeamstressApplicationReceived($application));
+        } catch (\Throwable $e) {
+            // Si el correo falla (SMTP mal configurado, etc.) la postulación igual queda guardada
+            Log::error('Failed to send seamstress confirmation email: ' . $e->getMessage());
         }
 
         return response()->json([
