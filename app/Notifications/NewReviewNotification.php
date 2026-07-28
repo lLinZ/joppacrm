@@ -6,6 +6,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class NewReviewNotification extends Notification
 {
@@ -28,7 +30,17 @@ class NewReviewNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database', 'broadcast', WebPushChannel::class];
+    }
+
+    public function toWebPush($notifiable, $notification): WebPushMessage
+    {
+        return (new WebPushMessage())
+            ->title('⭐ Nueva Reseña Recibida')
+            ->body('Review de ' . $this->review->user_name . ' (' . $this->review->rating . ' estrellas) para ' . ($this->review->product->name ?? 'Producto'))
+            ->icon('/android-chrome-192x192.png')
+            ->tag('review-' . $this->review->id)
+            ->data(['url' => '/reviews']);
     }
 
     /**

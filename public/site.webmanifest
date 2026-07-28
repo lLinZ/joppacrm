@@ -1,1 +1,46 @@
-{"name":"","short_name":"","icons":[{"src":"/android-chrome-192x192.png","sizes":"192x192","type":"image/png"},{"src":"/android-chrome-512x512.png","sizes":"512x512","type":"image/png"}],"theme_color":"#ffffff","background_color":"#ffffff","display":"standalone"}
+{
+    "name": "Joppa CRM",
+    "short_name": "Joppa CRM",
+    "description": "Gestión de órdenes, postulaciones y solicitudes de Joppa.",
+    "start_url": "/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "theme_color": "#0B3022",
+    "background_color": "#0a0a0a",
+    "lang": "es",
+    "icons": [
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Costureras",
+            "url": "/seamstress-applications"
+        },
+        {
+            "name": "Órdenes",
+            "url": "/orders"
+        },
+        {
+            "name": "Notificaciones",
+            "url": "/notifications"
+        }
+    ]
+}

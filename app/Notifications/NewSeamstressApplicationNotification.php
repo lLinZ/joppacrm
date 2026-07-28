@@ -6,6 +6,8 @@ use App\Models\SeamstressApplication;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class NewSeamstressApplicationNotification extends Notification
 {
@@ -23,7 +25,17 @@ class NewSeamstressApplicationNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database', 'broadcast', WebPushChannel::class];
+    }
+
+    public function toWebPush($notifiable, $notification): WebPushMessage
+    {
+        return (new WebPushMessage())
+            ->title('🧵 Nueva Postulación de Costurera')
+            ->body($this->application->name . ' se postuló desde ' . $this->application->location)
+            ->icon('/android-chrome-192x192.png')
+            ->tag('seamstress-' . $this->application->id)
+            ->data(['url' => '/seamstress-applications/' . $this->application->id]);
     }
 
     /**

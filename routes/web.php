@@ -68,6 +68,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.mark-read');
     Route::post('/notifications/{id}/open', [\App\Http\Controllers\NotificationController::class, 'open'])->name('notifications.open');
 
+    // Suscripciones de notificaciones push (PWA)
+    Route::post('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
+    Route::delete('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
+    Route::post('/push-subscriptions/test', [\App\Http\Controllers\PushSubscriptionController::class, 'test'])->name('push-subscriptions.test');
+
     // Tools
     Route::get('/tools/dtf-calculator', function () {
         return Inertia::render('Tools/DtfCalculator');

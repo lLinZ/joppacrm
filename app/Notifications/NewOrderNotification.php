@@ -6,6 +6,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class NewOrderNotification extends Notification
 {
@@ -28,7 +30,17 @@ class NewOrderNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database', 'broadcast', WebPushChannel::class];
+    }
+
+    public function toWebPush($notifiable, $notification): WebPushMessage
+    {
+        return (new WebPushMessage())
+            ->title('🛒 Nueva Orden Recibida')
+            ->body('Orden #' . $this->order->id . ' de ' . $this->order->name . ' por $' . number_format($this->order->total_amount, 2, ',', '.'))
+            ->icon('/android-chrome-192x192.png')
+            ->tag('order-' . $this->order->id)
+            ->data(['url' => '/orders/' . $this->order->id]);
     }
 
     /**

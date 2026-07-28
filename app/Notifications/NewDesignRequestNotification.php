@@ -7,6 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\DesignRequest;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class NewDesignRequestNotification extends Notification
 {
@@ -29,7 +31,17 @@ class NewDesignRequestNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database', 'broadcast', WebPushChannel::class];
+    }
+
+    public function toWebPush($notifiable, $notification): WebPushMessage
+    {
+        return (new WebPushMessage())
+            ->title('🎨 Nueva Solicitud de Diseño')
+            ->body('Solicitud #' . $this->designRequest->id . ' de ' . $this->designRequest->name)
+            ->icon('/android-chrome-192x192.png')
+            ->tag('design-' . $this->designRequest->id)
+            ->data(['url' => '/design-requests/' . $this->designRequest->id]);
     }
 
     /**

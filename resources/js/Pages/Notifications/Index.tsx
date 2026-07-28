@@ -6,6 +6,7 @@
 import React from 'react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { PageHeader } from '@/Components/ui/PageHeader';
+import { PushSettings } from '@/Components/ui/PushSettings';
 import { Head, Link, router } from '@inertiajs/react';
 import { Bell, Scissors, Palette, ShoppingBag, Star, Check } from 'lucide-react';
 
@@ -76,6 +77,9 @@ export default function Index({ notifications, filter, unreadCount }: Props) {
                     ) : undefined
                 }
             />
+
+            {/* Notificaciones push / instalar app */}
+            <PushSettings />
 
             {/* Filtros */}
             <div className="flex items-center gap-2 mb-5">
