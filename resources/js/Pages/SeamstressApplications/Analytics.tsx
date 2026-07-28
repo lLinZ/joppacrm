@@ -9,11 +9,11 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { StatCard } from '@/Components/ui/StatCard';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Users, DollarSign, TrendingUp, Gauge, Download, ArrowLeft,
     ChevronDown, ChevronsDownUp, ChevronsUpDown, Image as ImageIcon,
-    MessageSquare, StickyNote, Phone, Mail, MapPin,
+    MessageSquare, StickyNote, Phone, Mail, MapPin, Filter,
 } from 'lucide-react';
 import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -60,7 +60,24 @@ interface Props {
     timeline: { display: string; value: number }[];
     budgetComparison: Budget[];
     prospects: Prospect[];
+    filters: { range: string; status: string | null };
 }
+
+const RANGE_OPTIONS = [
+    { value: 'all', label: 'Todo el tiempo' },
+    { value: '7', label: 'Últimos 7 días' },
+    { value: '30', label: 'Últimos 30 días' },
+    { value: '90', label: 'Últimos 90 días' },
+];
+
+const STATUS_FILTER_OPTIONS = [
+    { value: '', label: 'Todos los estados' },
+    { value: 'pending', label: 'Nuevas' },
+    { value: 'reviewed', label: 'Revisadas' },
+    { value: 'contacted', label: 'Contactadas' },
+    { value: 'hired', label: 'Contratadas' },
+    { value: 'rejected', label: 'Descartadas' },
+];
 
 const STATUS_STYLE: Record<string, { badge: string; dot: string }> = {
     pending:   { badge: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20', dot: 'bg-yellow-400' },
@@ -220,7 +237,7 @@ function ProspectCard({ p, open, onToggle, onZoom }: { p: Prospect; open: boolea
     );
 }
 
-export default function Analytics({ stats, byStatus, byExperience, byMachine, byLocation, bySource, timeline, budgetComparison, prospects }: Props) {
+export default function Analytics({ stats, byStatus, byExperience, byMachine, byLocation, bySource, timeline, budgetComparison, prospects, filters }: Props) {
     const [lightbox, setLightbox] = useState<string | null>(null);
     const [openIds, setOpenIds] = useState<number[]>([]);
 
@@ -228,7 +245,23 @@ export default function Analytics({ stats, byStatus, byExperience, byMachine, by
     const allOpen = prospects.length > 0 && openIds.length === prospects.length;
     const toggleAll = () => setOpenIds(allOpen ? [] : prospects.map((p) => p.id));
     const hasData = stats.total > 0;
-    const exportUrl = route('seamstress-applications.export');
+
+    // --- Filtros de periodo y estado ---
+    const filtersActive = (filters.range && filters.range !== 'all') || !!filters.status;
+
+    const applyFilter = (patch: { range?: string; status?: string }) => {
+        const nextRange = patch.range ?? filters.range;
+        const nextStatus = patch.status !== undefined ? patch.status : (filters.status ?? '');
+        const params: Record<string, string> = {};
+        if (nextRange && nextRange !== 'all') params.range = nextRange;
+        if (nextStatus) params.status = nextStatus;
+        router.get(route('seamstress-applications.analytics'), params, { preserveScroll: true });
+    };
+
+    const exportParams = new URLSearchParams();
+    if (filters.range && filters.range !== 'all') exportParams.set('range', filters.range);
+    if (filters.status) exportParams.set('status', filters.status);
+    const exportUrl = route('seamstress-applications.export') + (exportParams.toString() ? `?${exportParams.toString()}` : '');
 
     const experienceData = byExperience.filter((d) => d.value > 0);
     const machineData = byMachine.filter((d) => d.value > 0);
@@ -263,12 +296,56 @@ export default function Analytics({ stats, byStatus, byExperience, byMachine, by
                         </a>
                     </div>
 
+                    {/* Barra de filtros */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-slate-500" />
+                            <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Filtros</span>
+                        </div>
+                        <select
+                            value={filters.range || 'all'}
+                            onChange={(e) => applyFilter({ range: e.target.value })}
+                            className="text-sm rounded-lg bg-black/20 border border-white/10 text-slate-200 px-3 py-2 focus:border-emerald-400/50 focus:ring-0"
+                        >
+                            {RANGE_OPTIONS.map((o) => <option key={o.value} value={o.value} className="bg-slate-900">{o.label}</option>)}
+                        </select>
+                        <select
+                            value={filters.status || ''}
+                            onChange={(e) => applyFilter({ status: e.target.value })}
+                            className="text-sm rounded-lg bg-black/20 border border-white/10 text-slate-200 px-3 py-2 focus:border-emerald-400/50 focus:ring-0"
+                        >
+                            {STATUS_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value} className="bg-slate-900">{o.label}</option>)}
+                        </select>
+                        {filtersActive && (
+                            <button
+                                onClick={() => router.get(route('seamstress-applications.analytics'), {}, { preserveScroll: true })}
+                                className="text-xs text-slate-400 hover:text-white transition-colors"
+                            >
+                                Limpiar filtros
+                            </button>
+                        )}
+                    </div>
+
                     {!hasData ? (
                         <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-6 py-16 text-center">
-                            <p className="text-slate-500">Todavía no hay postulaciones para analizar.</p>
-                            <p className="text-slate-600 text-sm mt-2">
-                                Comparte <span className="text-emerald-400 font-medium">joppa.shop/unete</span> para empezar a recibir candidatas.
-                            </p>
+                            {filtersActive ? (
+                                <>
+                                    <p className="text-slate-500">No hay postulaciones que coincidan con estos filtros.</p>
+                                    <button
+                                        onClick={() => router.get(route('seamstress-applications.analytics'), {}, { preserveScroll: true })}
+                                        className="text-emerald-400 hover:text-emerald-300 text-sm mt-2 font-medium"
+                                    >
+                                        Limpiar filtros
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-slate-500">Todavía no hay postulaciones para analizar.</p>
+                                    <p className="text-slate-600 text-sm mt-2">
+                                        Comparte <span className="text-emerald-400 font-medium">joppa.shop/unete</span> para empezar a recibir candidatas.
+                                    </p>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <>

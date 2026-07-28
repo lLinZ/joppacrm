@@ -29,9 +29,18 @@ class SeamstressApplicationController extends Controller
         ]);
     }
 
-    public function analytics()
+    public function analytics(Request $request)
     {
-        $apps = SeamstressApplication::orderBy('created_at')->get();
+        [$range, $status, $days] = $this->resolveFilters($request);
+
+        $query = SeamstressApplication::orderBy('created_at');
+        if ($status) {
+            $query->where('status', $status);
+        }
+        if ($days) {
+            $query->where('created_at', '>=', now()->subDays($days)->startOfDay());
+        }
+        $apps = $query->get();
 
         $prices = $apps->pluck('price_per_piece')
             ->filter(fn ($p) => $p !== null)
@@ -84,10 +93,11 @@ class SeamstressApplicationController extends Controller
             ->sortByDesc('value')
             ->values();
 
-        // --- Postulaciones por día (últimos 30 días) ---
+        // --- Postulaciones por día (según el periodo elegido; máx. 90 días para que la gráfica siga legible) ---
+        $timelineDays = min($days ?: 30, 90);
         $timeline = [];
         $grouped = $apps->groupBy(fn ($a) => $a->created_at->format('Y-m-d'));
-        for ($i = 29; $i >= 0; $i--) {
+        for ($i = $timelineDays - 1; $i >= 0; $i--) {
             $date = now()->subDays($i);
             $timeline[] = [
                 'display' => $date->format('d/m'),
@@ -139,16 +149,20 @@ class SeamstressApplicationController extends Controller
             'timeline'         => $timeline,
             'budgetComparison' => $budgetComparison,
             'prospects'        => $prospects,
+            'filters'          => ['range' => $range, 'status' => $status],
         ]);
     }
 
     public function export(Request $request): StreamedResponse
     {
-        $status = $request->query('status');
+        [$range, $status, $days] = $this->resolveFilters($request);
 
         $query = SeamstressApplication::query();
-        if ($status && array_key_exists($status, self::STATUS_LABELS)) {
+        if ($status) {
             $query->where('status', $status);
+        }
+        if ($days) {
+            $query->where('created_at', '>=', now()->subDays($days)->startOfDay());
         }
         // Ordenado por tarifa para que sirva de comparación de presupuestos
         $apps = $query->orderByRaw('price_per_piece IS NULL, price_per_piece ASC')->get();
@@ -251,6 +265,27 @@ class SeamstressApplicationController extends Controller
         $seamstressApplication->delete();
 
         return redirect()->route('seamstress-applications.index')->with('success', 'Postulación eliminada.');
+    }
+
+    /**
+     * Lee y normaliza los filtros de periodo y estado de la query.
+     * @return array{0:string,1:?string,2:?int} [range, status, days]
+     */
+    private function resolveFilters(Request $request): array
+    {
+        $range = $request->query('range', 'all');
+        $daysMap = ['7' => 7, '30' => 30, '90' => 90];
+        $days = $daysMap[$range] ?? null;
+        if ($days === null) {
+            $range = 'all';
+        }
+
+        $status = $request->query('status');
+        if (!$status || !array_key_exists($status, self::STATUS_LABELS)) {
+            $status = null;
+        }
+
+        return [$range, $status, $days];
     }
 
     private function median(array $values): ?float
