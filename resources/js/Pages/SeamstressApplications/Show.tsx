@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/Components/ui/AppLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { MailCheck } from 'lucide-react';
 
 interface SeamstressApplication {
     id: number;
@@ -65,11 +66,26 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 export default function Show({ application }: Props) {
     const [lightbox, setLightbox] = useState<string | null>(null);
+    const [sending, setSending] = useState(false);
 
     const { data, setData, patch, processing } = useForm({
         status: application.status,
         admin_notes: application.admin_notes ?? '',
     });
+
+    const sendConfirmationEmail = () => {
+        if (!confirm(`¿Enviar el correo de confirmación a ${application.email}?`)) return;
+        setSending(true);
+        router.post(`/seamstress-applications/${application.id}/send-email`, {}, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                // Refleja en el textarea la nota que el servidor acaba de registrar
+                const fresh = (page.props as any).application;
+                if (fresh && fresh.admin_notes !== undefined) setData('admin_notes', fresh.admin_notes ?? '');
+            },
+            onFinish: () => setSending(false),
+        });
+    };
 
     const save = (e: React.FormEvent) => {
         e.preventDefault();
@@ -111,7 +127,15 @@ export default function Show({ application }: Props) {
                                 })}
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                            <button
+                                onClick={sendConfirmationEmail}
+                                disabled={sending}
+                                className="inline-flex items-center gap-2 text-white font-medium text-sm bg-emerald-500 hover:bg-emerald-400 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <MailCheck className="w-4 h-4" />
+                                {sending ? 'Enviando...' : 'Enviar confirmación'}
+                            </button>
                             <a
                                 href={`https://wa.me/${waNumber}`}
                                 target="_blank"

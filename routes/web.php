@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
     // Rutas GET específicas antes del resource para que no las capture {seamstress_application} de show
     Route::get('seamstress-applications/analytics', [\App\Http\Controllers\SeamstressApplicationController::class, 'analytics'])->name('seamstress-applications.analytics');
     Route::get('seamstress-applications/export', [\App\Http\Controllers\SeamstressApplicationController::class, 'export'])->name('seamstress-applications.export');
+    Route::post('seamstress-applications/{seamstress_application}/send-email', [\App\Http\Controllers\SeamstressApplicationController::class, 'sendEmail'])->name('seamstress-applications.send-email');
     Route::resource('seamstress-applications', \App\Http\Controllers\SeamstressApplicationController::class)
         ->only(['index', 'show', 'update', 'destroy']);
 

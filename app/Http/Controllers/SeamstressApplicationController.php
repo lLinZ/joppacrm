@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\SeamstressApplicationReceived;
 use App\Models\SeamstressApplication;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -218,6 +221,29 @@ class SeamstressApplicationController extends Controller
         $seamstressApplication->update($validated);
 
         return back()->with('success', 'Postulación actualizada.');
+    }
+
+    public function sendEmail(SeamstressApplication $seamstressApplication)
+    {
+        try {
+            Mail::to($seamstressApplication->email)->send(new SeamstressApplicationReceived($seamstressApplication));
+        } catch (\Throwable $e) {
+            Log::error('Failed to send confirmation email from admin: ' . $e->getMessage());
+
+            return back()->with('error', 'No se pudo enviar el correo: ' . $e->getMessage());
+        }
+
+        // Dejar registro en las notas internas de a quién y cuándo se le escribió
+        $who = auth()->user()?->name;
+        $stamp = '[' . now()->format('d/m/Y H:i') . '] Se envió correo de confirmación'
+            . ($who ? ' (por ' . $who . ')' : '') . '.';
+
+        $seamstressApplication->admin_notes = trim(
+            ($seamstressApplication->admin_notes ? $seamstressApplication->admin_notes . "\n" : '') . $stamp
+        );
+        $seamstressApplication->save();
+
+        return back()->with('success', 'Correo de confirmación enviado a ' . $seamstressApplication->email . '.');
     }
 
     public function destroy(SeamstressApplication $seamstressApplication)
